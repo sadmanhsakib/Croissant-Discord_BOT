@@ -23,11 +23,12 @@ client = discord.Client(intents=intents)
 # Getting the CONST from the .env files
 DARK_HUMOR_CHANNEL_ID = int(os.getenv("DARK_HUMOR_CHANNEL_ID"))
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
 QURAN_FILE = "quran.txt"
 SUNNAH_FILE = "sunnah.txt"
 QUOTES_FILE = "quote.txt"
 QUOTE_LIST = [QURAN_FILE, SUNNAH_FILE, QUOTES_FILE]
+GIFS = os.getenv("GIFS")
+TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
 
 
 @client.event
@@ -72,8 +73,17 @@ async def on_message(message):
 
             # +1 to remove the command itself
             await message.channel.purge(limit=amount+1)
-        except Exception as error:
+        except Exception:
             await message.channel.send("Invalid Argument!\nCorrent syntax: -del<space>[Number of Messages to Remove].")
+
+    if message.content.startswith("-gif"):
+        try:
+            n = int(message.content.replace("-gif ", ""))
+
+            await message.channel.send(GIFS[n])
+        except Exception:
+            await message.channel.send("Invalid Argument!\nCorrent syntax: -gif<space>[gif number].")
+
 
     if message.content.startswith("-"):
         # replying with quotes
