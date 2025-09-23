@@ -1,5 +1,4 @@
 import discord
-import datetime
 import random
 import os
 import dotenv
@@ -71,7 +70,7 @@ async def on_message(message):
         if message.content.startswith(msg):
             await message.channel.send(message_dict[msg])
 
-    # deletes the necessary lines as per user request
+    # deletes previous lines as per user request
     if message.content.startswith("-del"):
         try:
             amount = message.content.replace("-del ", "")
@@ -92,20 +91,17 @@ async def on_message(message):
 
             if gif_name in gif_names:
                 gif_msg = await message.channel.send(gif_dict[gif_name])
-                # removing the gif message after 5 seconds
-                time.sleep(5)
-                await gif_msg.delete()
             elif gif_name not in gif_names:
-                await message.channel.send("GIF not found.\nGIF names are: ")
-                for key in gif_dict.keys():
-                    await message.channel.send(key)
-        except Exception:
-            await message.channel.send("Invalid Argument!\nCorrent syntax: -gif<space>[gif_name].")
-            await message.channel.send("GIF names are: ")
-            for key in gif_dict.keys():
-                await message.channel.send(key)
+                await message.channel.send(f"There is no {gif_name} in gif_storage. ")
+                await message.channel.send(f"Available gifs are: {gif_names}")
 
-    
+        except Exception:
+            await message.channel.send("Invalid prompt! Corrent syntax: -gif<space>gif_name.")
+            await message.channel.send(f"Available gifs are: {gif_names}")
+
+            # removing the gif message after SLEEP_TIME seconds
+            time.sleep(SLEEP_TIME)
+            await gif_msg.delete()
     if message.content.startswith("-greet"):
         try:
             parts = message.content.split(' ')
@@ -119,14 +115,13 @@ async def on_message(message):
 
             await message.channel.send(f"Hello, {user_name}")
             gif_msg = await message.channel.send(gif_dict[gif_name])
-            
-            # waiting for other's to see the message, then delete it
-            time.sleep(SLEEP_TIME)
-            await gif_msg.delete()
         except Exception:
             await message.channel.send("Invalid. Syntax: -greet <username> <GIF-name>")
-            for key in gif_dict.keys():
-                await message.channel.send(key)
+            await message.channgel.send(f"Available gifs are: {gif_names}")
+
+        # waiting for other's to see the message, then delete it
+        time.sleep(SLEEP_TIME)
+        await gif_msg.delete()
 
     if message.content.startswith("-"):
         # replying with quotes
@@ -148,13 +143,9 @@ async def on_message(message):
 # called when a member of the server changes their activity
 # before and after represents the member that has changed presence;
 async def on_presence_update(before, after):
-    now = datetime.datetime.now().strftime(TIME_FORMAT)
-    counter = 0
-
     # getting the channel id
     dark_humor_channel = client.get_channel(DARK_HUMOR_CHANNEL_ID)
 
-    
     # prevents replying to bot presence update
     if not after.bot:
         old_status = str(before.status)
