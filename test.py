@@ -3,4 +3,4 @@ g = {
     "unc": 2
 }
 
-print(g.keys())
+print(list(g.keys()))
