@@ -49,6 +49,10 @@ async def on_message(message):
     if message.author == client.user:
         return
     
+    gif_names = []
+    for key in gif_dict.keys():
+        gif_names.append(key)
+    
     # stores every simple reply simple_commands
     message_dict = {
         "-hello": f"Good day, {message.author.mention}. Hope you are having a fantastic day. ",
@@ -84,25 +88,18 @@ async def on_message(message):
         try:
             gif_name = message.content.replace("-gif ", "")
 
-            gif_names = []
-            for key in gif_dict.keys():
-                gif_names.append(key)
-
-            if gif_name in gif_names:
+            if gif_name == "":
+                await message.channel.send("Invalid prompt! Corrent syntax: -gif<space>GIF_NAME")
+            elif gif_name in gif_names:
                 await message.channel.send(gif_dict[gif_name], delete_after=SLEEP_TIME)
             elif gif_name not in gif_names:
-                await message.channel.send(f"There is no {gif_name} in gif_storage. ")
+                await message.channel.send(f"There is no '{gif_name}' in gif_storage. ")
                 await message.channel.send(f"Available gifs are: {gif_names}")
-
         except Exception:
             await message.channel.send("Invalid prompt! Corrent syntax: -gif<space>GIF_NAME")
 
     if message.content.startswith("-greet"):
         try:
-            gif_names = []
-            for key in gif_dict.keys():
-                gif_names.append(key)
-            
             parts = message.content.split(' ')
             if len(parts) == 3:
                 gif_name = parts[2]
@@ -115,8 +112,8 @@ async def on_message(message):
                 await message.channel.send(f"Hello, {user_name}")
                 await message.channel.send(gif_dict[gif_name], delete_after=SLEEP_TIME)
             elif gif_name not in gif_names:
-                await message.channel.send("There is no {gif_name} in gif_storage.")
-                await message.channgel.send(f"Available gifs are: {gif_names}")
+                await message.channel.send(f"There is no '{gif_name}' in gif_storage.")
+                await message.channel.send(f"Available gifs are: {gif_names}")
         except Exception:
             await message.channel.send("Invalid. Syntax: -greet<space>USERNAME<space><GIF_NAME")
 
