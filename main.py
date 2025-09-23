@@ -99,7 +99,7 @@ async def on_presence_update(before, after):
     counter = 0
 
     # getting the channel id
-    dark_humor_channel = client.get_channel(dark_humor_channel)
+    dark_humor_channel = client.get_channel(DARK_HUMOR_CHANNEL_ID)
 
     
     # preventing the bot from messaging on it's own
