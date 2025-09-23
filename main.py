@@ -3,9 +3,12 @@ import datetime
 import random
 import os
 import dotenv
+import json
 
 # loading .env file
 dotenv.load_dotenv(".env")
+# config stores all the values inside the .env file
+config = dotenv.dotenv_values(".env")
 
 # for running the bot as a web 
 from keep_alive import keep_alive
@@ -27,8 +30,10 @@ QURAN_FILE = "quran.txt"
 SUNNAH_FILE = "sunnah.txt"
 QUOTES_FILE = "quote.txt"
 QUOTE_LIST = [QURAN_FILE, SUNNAH_FILE, QUOTES_FILE]
-GIFS = os.getenv("GIFS")
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
+
+GIFS = config.get("GIFS")
+gif_dict = json.loads(GIFS)
 
 
 @client.event
@@ -78,11 +83,22 @@ async def on_message(message):
 
     if message.content.startswith("-gif"):
         try:
-            n = int(message.content.replace("-gif ", ""))
+            gif_name = message.content.replace("-gif ", "")
 
-            await message.channel.send(GIFS[n])
+            for key in gif_dict.keys():
+                if gif_name == key:
+                    await message.channel.send(gif_dict[gif_name])
+                    break
+            else:
+                await message.channel.send("GIF not found.\nGIF names are: ")
+                for key in gif_dict.keys():
+                    await message.channel.send(key)
+
         except Exception:
-            await message.channel.send("Invalid Argument!\nCorrent syntax: -gif<space>[gif number].")
+            await message.channel.send("Invalid Argument!\nCorrent syntax: -gif<space>[gif_name].")
+            await message.channel.send("GIF names are: ")
+            for key in gif_dict.keys():
+                await message.channel.send(key)
 
 
     if message.content.startswith("-"):
