@@ -6,8 +6,6 @@ import json
 
 # loading .env file
 dotenv.load_dotenv(".env")
-# config stores all the values inside the .env file
-config = dotenv.dotenv_values(".env")
 
 # for running the bot as a web 
 from keep_alive import keep_alive
@@ -31,8 +29,7 @@ SUNNAH_FILE = "sunnah.txt"
 QUOTES_FILE = "quote.txt"
 QUOTE_LIST = [QURAN_FILE, SUNNAH_FILE, QUOTES_FILE]
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
-GIFS = config.get("GIFS")
-gif_dict = json.loads(GIFS)
+gif_dict = json.loads(os.getenv("GIFS"))
 
 
 @client.event
@@ -64,7 +61,7 @@ async def on_message(message):
     for k in message_dict.keys():
         help += f"{k}\n"
     # stores all the complex_commands name in help
-    help += "-del\n-quran\n-quote\n-sunnah"
+    help += "-del\n-gif <gif_name>\n-list <item_name>\n-add gif<space>NAME<space>link\n-rmv gif<space>NAME\n-quran\n-quote\n-sunnah"
     # adding the help section to the dict
     message_dict.update({"-help": f"{help}"})
 
@@ -81,10 +78,26 @@ async def on_message(message):
 
             # +1 to remove the command itself
             await message.channel.purge(limit=amount+1)
-        except Exception:
+        except:
             await message.channel.send("Invalid Argument!\nCorrent syntax: -del<space>[Number of Messages to Remove].")
 
-    if message.content.startswith("-gif"):
+    elif message.content.startswith("-list"):
+        try:
+            item_name = message.content.replace("-list", "")
+
+            if item_name == "":
+                await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME") 
+            else:
+                item_name = item_name.replace(" ", "")
+
+                if item_name == "gif":
+                    await message.channel.send(f"Available gifs are: {gif_names}")
+                else:
+                    await message.channel.send(f"{item_name} doesn't exists. ")
+        except:
+            await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME")
+                
+    elif message.content.startswith("-gif"):
         try:
             gif_name = message.content.replace("-gif ", "")
 
@@ -95,10 +108,10 @@ async def on_message(message):
             elif gif_name not in gif_names:
                 await message.channel.send(f"There is no '{gif_name}' in gif_storage. ")
                 await message.channel.send(f"Available gifs are: {gif_names}")
-        except Exception:
-            await message.channel.send("Invalid prompt! Corrent syntax: -gif<space>GIF_NAME")
+        except:
+            await message.channel.send("Invalid prompt! Correct syntax: -gif<space>GIF_NAME")
 
-    if message.content.startswith("-greet"):
+    elif message.content.startswith("-greet"):
         try:
             parts = message.content.split(' ')
             if len(parts) == 3:
@@ -114,10 +127,51 @@ async def on_message(message):
             elif gif_name not in gif_names:
                 await message.channel.send(f"There is no '{gif_name}' in gif_storage.")
                 await message.channel.send(f"Available gifs are: {gif_names}")
-        except Exception:
+        except:
             await message.channel.send("Invalid. Syntax: -greet<space>USERNAME<space><GIF_NAME")
 
-    if message.content.startswith("-"):
+    elif message.content.startswith("-add"):
+        try:
+            parts = message.content.split(' ')
+            
+            if len(parts) == 4:
+                name = f"{parts[2]}"
+                link = f"{parts[3]}"
+
+                gif_dict.update({name: link})
+                # dumping the whole dict in a string
+                gifs_str = json.dumps(gif_dict, ensure_ascii=False)
+
+                # adding the items to the dictionary
+                dotenv.set_key(".env", "GIFS", gifs_str)
+
+                await message.channel.send(f"{name} added successfully.")
+            else:
+                await message.channel.send("Invalid. Correct Syntax: -add gif<space>NAME<space>link")
+        except:
+            await message.channel.send("Error. Correct Syntax: -add gif<space>NAME<space>link")
+
+    elif message.content.startswith("-rmv"):
+        try:
+            parts = message.content.split(' ')
+
+            if len(parts) == 3:
+                name = f"{parts[2]}"
+                
+                gif_dict.pop(name)
+                # dumping the whole dict in a string
+                gifs_str = json.dumps(gif_dict, ensure_ascii=False)
+
+                # adding the items to the dictionary
+                dotenv.set_key(".env", "GIFS", gifs_str)
+            
+                await message.channel.send(f"{name} removed successfully.")
+            else:
+                await message.channel.send("Error. Correct Syntax: -rmv gif<space>NAME")
+        except:
+            await message.channel.send("Error. Correct Syntax: -rmv gif<space>NAME")
+
+    elif message.content.startswith("-"):
         # replying with quotes
         for x in QUOTE_LIST:
             # parsing the strings into user command style for comparing
