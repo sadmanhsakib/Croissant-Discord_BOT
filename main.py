@@ -97,20 +97,6 @@ async def on_message(message):
         except:
             await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME")
                 
-    elif message.content.startswith("-gif"):
-        try:
-            gif_name = message.content.replace("-gif ", "")
-
-            if gif_name == "":
-                await message.channel.send("Invalid prompt! Corrent syntax: -gif<space>GIF_NAME")
-            elif gif_name in gif_names:
-                await message.channel.send(gif_dict[gif_name], delete_after=SLEEP_TIME)
-            elif gif_name not in gif_names:
-                await message.channel.send(f"There is no '{gif_name}' in gif_storage. ")
-                await message.channel.send(f"Available gifs are: {gif_names}")
-        except:
-            await message.channel.send("Invalid prompt! Correct syntax: -gif<space>GIF_NAME")
-
     elif message.content.startswith("-greet"):
         try:
             parts = message.content.split(' ')
@@ -171,14 +157,31 @@ async def on_message(message):
         except:
             await message.channel.send("Error. Correct Syntax: -rmv gif<space>NAME")
 
+    elif message.content.startswith(":"):
+        # replying with gifs
+        try:
+            gif_name = message.content.replace(':', '')
+
+            if gif_name == "":
+                await message.channel.send("Invalid prompt! Corrent syntax: :GIF_NAME")
+            elif gif_name in gif_names:
+                for key in gif_dict.keys():
+                    if gif_name == key:
+                        await message.channel.send(gif_dict[gif_name], delete_after=SLEEP_TIME)
+            else:
+                await message.channel.send(f"There is no '{gif_name}' in gif_storage. ")
+                await message.channel.send(f"Available gifs are: {gif_names}")
+        except:
+            await message.channel.send("Invalid prompt! Correct syntax: :GIF_NAME")
+
     elif message.content.startswith("-"):
         # replying with quotes
         for x in QUOTE_LIST:
             # parsing the strings into user command style for comparing
-            y = x.replace(f".txt", "")
-            y = "-" + y
+            file_name = x.replace(f".txt", "")
+            file_name = "-" + file_name
 
-            if message.content == y:
+            if message.content == file_name:
                 # since Bengali alphabet is in unicode, we need to open the file in unicode
                 with open(x, "r", encoding="utf-8") as file:
                     lines = file.readlines()
