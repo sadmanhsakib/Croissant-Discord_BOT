@@ -23,13 +23,14 @@ client = discord.Client(intents=intents)
 # Getting the CONST from the .env files
 DARK_HUMOR_CHANNEL_ID = int(os.getenv("DARK_HUMOR_CHANNEL_ID"))
 SLEEP_TIME = int(os.getenv("SLEEP_TIME"))
+TYPES = os.getenv("TYPE").split(',')
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 QURAN_FILE = "quran.txt"
 SUNNAH_FILE = "sunnah.txt"
 QUOTES_FILE = "quote.txt"
 QUOTE_LIST = [QURAN_FILE, SUNNAH_FILE, QUOTES_FILE]
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
-gif_dict = json.loads(os.getenv("GIFS"))
+gif_dict = json.loads(os.getenv("GIF"))
 
 
 @client.event
@@ -46,10 +47,8 @@ async def on_message(message):
     if message.author == client.user:
         return
     
-    gif_names = []
-    for key in gif_dict.keys():
-        gif_names.append(key)
-    
+    gif_names = list(gif_dict.keys())
+
     # stores every simple reply simple_commands
     message_dict = {
         "-hello": f"Good day, {message.author.mention}. Hope you are having a fantastic day. ",
@@ -89,9 +88,13 @@ async def on_message(message):
                 await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME") 
             else:
                 item_name = item_name.replace(" ", "")
+                item_name = item_name.upper()
 
-                if item_name == "gif":
-                    await message.channel.send(f"Available gifs are: {gif_names}")
+                if item_name in TYPES:
+                        dictionary = json.loads(os.getenv(item_name))
+                        
+                        keys = list(dictionary.keys())
+                        await message.channel.send(f"Available {item_name}s are: {keys}")
                 else:
                     await message.channel.send(f"{item_name} doesn't exists. ")
         except:
@@ -121,41 +124,48 @@ async def on_message(message):
             parts = message.content.split(' ')
             
             if len(parts) == 4:
-                name = f"{parts[2]}"
-                link = f"{parts[3]}"
+                type = parts[1].upper()
+                name = parts[2]
+                link = parts[3]
+                dictionary = json.loads(os.getenv(type))
 
-                gif_dict.update({name: link})
-                # dumping the whole dict in a string
-                gifs_str = json.dumps(gif_dict, ensure_ascii=False)
+                if type in TYPES:
+                    dictionary.update({name: link})
+                    # dumping the whole dict in a string
+                    updated = json.dumps(dictionary, ensure_ascii=False)
 
-                # adding the items to the dictionary
-                dotenv.set_key(".env", "GIFS", gifs_str)
-
-                await message.channel.send(f"{name} added successfully.")
+                    # adding the items to the dictionary
+                    dotenv.set_key(".env", type, updated)
+                    await message.channel.send(f"{type}: {name} added successfully.")
+                else:
+                    await message.channel.send(f"Type not found. Available types are: {TYPES}")
             else:
-                await message.channel.send("Invalid. Correct Syntax: -add gif<space>NAME<space>link")
+                await message.channel.send("Invalid. Correct Syntax: -add TYPE<space>NAME<space>LINK")
         except:
-            await message.channel.send("Error. Correct Syntax: -add gif<space>NAME<space>link")
+            await message.channel.send("Error. Correct Syntax: -add TYPE<space>NAME<space>LINK")
 
     elif message.content.startswith("-rmv"):
         try:
             parts = message.content.split(' ')
 
             if len(parts) == 3:
-                name = f"{parts[2]}"
-                
-                gif_dict.pop(name)
-                # dumping the whole dict in a string
-                gifs_str = json.dumps(gif_dict, ensure_ascii=False)
+                type = parts[1].upper()
+                name = parts[2]
+                dictionary = json.loads(os.getenv(type))
 
-                # adding the items to the dictionary
-                dotenv.set_key(".env", "GIFS", gifs_str)
-            
-                await message.channel.send(f"{name} removed successfully.")
+                if type in TYPES:   
+                    dictionary.pop(name)
+                    # dumping the whole dict in a string
+                    updated = json.dumps(dictionary, ensure_ascii=False)
+
+                    # adding the items to the dictionary
+                    dotenv.set_key(".env", type, updated)
+                
+                    await message.channel.send(f"{type}: {name} removed successfully.")
             else:
-                await message.channel.send("Error. Correct Syntax: -rmv gif<space>NAME")
+                await message.channel.send("Error. Correct Syntax: -rmv TYPE<space>NAME")
         except:
-            await message.channel.send("Error. Correct Syntax: -rmv gif<space>NAME")
+            await message.channel.send("Error. Correct Syntax: -rmv TYPE<space>NAME")
 
     elif message.content.startswith(":"):
         # replying with gifs
