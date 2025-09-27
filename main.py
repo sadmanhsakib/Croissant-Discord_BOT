@@ -94,7 +94,11 @@ async def on_message(message):
                         dictionary = json.loads(os.getenv(item_name))
                         
                         keys = list(dictionary.keys())
-                        await message.channel.send(f"Available {item_name}s are: {keys}")
+
+                        if keys != []:
+                            await message.channel.send(f"Available {item_name}s are: {keys}")
+                        else:
+                            await message.channel.send("Empty. ")
                 else:
                     await message.channel.send(f"{item_name} doesn't exists. ")
         except:
