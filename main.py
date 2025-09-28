@@ -30,7 +30,10 @@ SUNNAH_FILE = "sunnah.txt"
 QUOTES_FILE = "quote.txt"
 QUOTE_LIST = [QURAN_FILE, SUNNAH_FILE, QUOTES_FILE]
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
+
 gif_dict = json.loads(os.getenv("GIF"))
+img_dict = json.loads(os.getenv("IMG"))
+vid_dict = json.loads(os.getenv("VID"))
 
 
 @client.event
@@ -49,58 +52,56 @@ async def on_message(message):
     
     gif_names = list(gif_dict.keys())
 
-    # stores every simple reply simple_commands
+    # stores the simple_commands
     message_dict = {
         "-hello": f"Good day, {message.author.mention}. Hope you are having a fantastic day. ",
         "-status": "Active."
     }
 
     help = "Command list:\n"
-    # stores all the simple_commands name in help
-    for k in message_dict.keys():
+
+    # stores all the simple_command's name in help
+    for k in message_dict:
         help += f"{k}\n"
+
     # stores all the complex_commands name in help
     help += "-del\n-gif <gif_name>\n-list <item_name>\n-add gif<space>NAME<space>link\n-rmv gif<space>NAME\n-quran\n-quote\n-sunnah"
+    
     # adding the help section to the dict
-    message_dict.update({"-help": f"{help}"})
+    message_dict.update({"-help": help})
 
     # replies to user messages
     for msg in message_dict:
         if message.content.startswith(msg):
             await message.channel.send(message_dict[msg])
 
-    # deletes previous lines as per user request
+    # deletes previous messages as per user request
     if message.content.startswith("-del"):
         try:
-            amount = message.content.replace("-del ", "")
-            amount = int(amount)
+            parts = message.content.split(' ')
+            amount = int(parts[1])
 
             # +1 to remove the command itself
             await message.channel.purge(limit=amount+1)
         except:
-            await message.channel.send("Invalid Argument!\nCorrent syntax: -del<space>[Number of Messages to Remove].")
+            await message.channel.send("Invalid command. Correct Syntax: -del<space>[Number of Messages to Remove]. ")
 
+    # replies with the list of objects as per user request
     elif message.content.startswith("-list"):
         try:
-            item_name = message.content.replace("-list", "")
+            parts = message.content.split(' ')
+            item_name = parts[1].upper()
 
-            if item_name == "":
-                await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME") 
-            else:
-                item_name = item_name.replace(" ", "")
-                item_name = item_name.upper()
+            if item_name in TYPES:
+                dictionary = json.loads(os.getenv(item_name))
+                keys = list(dictionary.keys())
 
-                if item_name in TYPES:
-                        dictionary = json.loads(os.getenv(item_name))
-                        
-                        keys = list(dictionary.keys())
-
-                        if keys != []:
-                            await message.channel.send(f"Available {item_name}s are: {keys}")
-                        else:
-                            await message.channel.send("Empty. ")
+                if keys != []:
+                    await message.channel.send(f"Available {item_name}s are: {keys}")
                 else:
-                    await message.channel.send(f"{item_name} doesn't exists. ")
+                    await message.channel.send("Empty. ")
+            else:
+                await message.channel.send(f"{item_name} doesn't exists. ")
         except:
             await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME")
                 
@@ -123,51 +124,73 @@ async def on_message(message):
         except:
             await message.channel.send("Invalid. Syntax: -greet<space>USERNAME<space><GIF_NAME")
 
+    # adds items based on their type
     elif message.content.startswith("-add"):
         try:
             parts = message.content.split(' ')
-            
-            if len(parts) == 4:
-                type = parts[1].upper()
-                name = parts[2]
-                link = parts[3]
-                dictionary = json.loads(os.getenv(type))
+            type = parts[1].upper()
+            name = parts[2]
+            link = parts[3]
 
-                if type in TYPES:
-                    dictionary.update({name: link})
-                    # dumping the whole dict in a string
-                    updated = json.dumps(dictionary, ensure_ascii=False)
+            # acquiring the correct sort of dictionary
+            match type:
+                case "GIF":
+                    dictionary = gif_dict
+                case "IMG":
+                    dictionary = img_dict
+                case "VID":
+                    dictionary = vid_dict
 
-                    # adding the items to the dictionary
-                    dotenv.set_key(".env", type, updated)
-                    await message.channel.send(f"{type}: {name} added successfully.")
-                else:
-                    await message.channel.send(f"Type not found. Available types are: {TYPES}")
+            if type in TYPES:
+                # adding the items to the dictionary
+                dictionary.update({name: link})
+
+                # dumping the whole dict in a string
+                updated = json.dumps(dictionary, ensure_ascii=False)
+                
+                # saving the data in the .env file
+                dotenv.set_key(".env", type, updated)
+                
+                await message.channel.send(f"{type}: {name} added successfully.")
             else:
-                await message.channel.send("Invalid. Correct Syntax: -add TYPE<space>NAME<space>LINK")
+                await message.channel.send(f"Type not found. Available types are: {TYPES}")
         except:
             await message.channel.send("Error. Correct Syntax: -add TYPE<space>NAME<space>LINK")
 
+    # removes items based on their type
     elif message.content.startswith("-rmv"):
         try:
             parts = message.content.split(' ')
+            type = parts[1].upper()
+            name = parts[2]
 
-            if len(parts) == 3:
-                type = parts[1].upper()
-                name = parts[2]
-                dictionary = json.loads(os.getenv(type))
+            # acquiring the correct sort of dictionary
+            match type:
+                case "GIF":
+                    dictionary = gif_dict
+                case "IMG":
+                    dictionary = img_dict
+                case "VID":
+                    dictionary = vid_dict
 
-                if type in TYPES:   
-                    dictionary.pop(name)
-                    # dumping the whole dict in a string
-                    updated = json.dumps(dictionary, ensure_ascii=False)
+            keys = list(dictionary.keys())
 
-                    # adding the items to the dictionary
-                    dotenv.set_key(".env", type, updated)
+            if type in TYPES and name in keys:
+                # removing the item from the dictionary
+                dictionary.pop(name)
+
+                # dumping the whole dict in a string
+                updated = json.dumps(dictionary, ensure_ascii=False)
+
+                # adding the items to the dictionary
+                dotenv.set_key(".env", type, updated)
                 
-                    await message.channel.send(f"{type}: {name} removed successfully.")
+                await message.channel.send(f"{type}: {name} removed successfully.")
             else:
-                await message.channel.send("Error. Correct Syntax: -rmv TYPE<space>NAME")
+                if type not in TYPES:
+                    await message.channel.send(f"Type not found. Available types are: {TYPES}")
+                else:
+                    await message.channel.send(f"{name} not found. Available names are: {keys}")
         except:
             await message.channel.send("Error. Correct Syntax: -rmv TYPE<space>NAME")
 

@@ -10,7 +10,6 @@ __pycache__/
 .Python
 .env
 test.py
-backup.env
 build/
 develop-eggs/
 dist/
