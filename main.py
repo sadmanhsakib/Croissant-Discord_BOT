@@ -111,7 +111,7 @@ async def on_message(message):
             parts = message.content.split(' ')
             item_name = parts[1].upper()
 
-            match type:
+            match item_name:
                 case "GIF":
                     dictionary = gif_dict
                 case "IMG":
