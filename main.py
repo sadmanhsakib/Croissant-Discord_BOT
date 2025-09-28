@@ -228,6 +228,9 @@ async def on_message(message):
             if gif_name == "":
                 await message.channel.send("Invalid prompt! Corrent syntax: :GIF_NAME")
             elif gif_name in gif_names:
+                if gif_name == "clanker":
+                    await message.add_reaction("💢")
+
                 for key in gif_dict.keys():
                     if gif_name == key:
                         await message.channel.send(gif_dict[gif_name], delete_after=SLEEP_TIME)
