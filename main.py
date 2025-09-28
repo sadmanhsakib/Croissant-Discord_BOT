@@ -17,14 +17,17 @@ intents.message_content = True
 intents.messages = True
 intents.presences = True
 intents.members = True
+intents.guilds = True
 
 client = discord.Client(intents=intents)
 
-# Getting the CONST from the .env files
-DARK_HUMOR_CHANNEL_ID = int(os.getenv("DARK_HUMOR_CHANNEL_ID"))
+# Getting the data from the .env files
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+REPO_LINK = os.getenv("REPO_LINK")
 SLEEP_TIME = int(os.getenv("SLEEP_TIME"))
 TYPES = os.getenv("TYPE").split(',')
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
+
 QURAN_FILE = "quran.txt"
 SUNNAH_FILE = "sunnah.txt"
 QUOTES_FILE = "quote.txt"
@@ -41,6 +44,22 @@ vid_dict = json.loads(os.getenv("VID"))
 async def on_ready():
     # prints a message in console when ready
     print(f"Logged in as: {client.user}")
+
+
+@client.event
+async def on_guild_join(guild):
+    # getting the general channel of the server that the BOT just joined
+    channel = discord.utils.get(guild.text_channels, name="general")
+    
+    if channel and channel.permissions_for(guild.me).send_messages:
+        # sending greeting messages
+        await channel.send("Thank you for adding Croissant!")
+        await channel.send("Type: -help; to get the command list.")
+        await channel.send(f"You can learn more about me from here: {REPO_LINK}")
+
+        # instructing the users on how to set up the channel
+        await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
+        await channel.send("If you want to use this feature, use the '-set<space>CHANNEL_ID' command. ")
 
 
 @client.event
@@ -65,7 +84,7 @@ async def on_message(message):
         help += f"{k}\n"
 
     # stores all the complex_commands name in help
-    help += "-del\n-gif <gif_name>\n-list <item_name>\n-add gif<space>NAME<space>link\n-rmv gif<space>NAME\n-quran\n-quote\n-sunnah"
+    help += "-del\n:GIF_NAME\n-list<space>ITEM_NAME\n-add gif<space>NAME<space>link\n-rmv gif<space>NAME\n-quran\n-quote\n-sunnah"
     
     # adding the help section to the dict
     message_dict.update({"-help": help})
@@ -92,8 +111,15 @@ async def on_message(message):
             parts = message.content.split(' ')
             item_name = parts[1].upper()
 
+            match type:
+                case "GIF":
+                    dictionary = gif_dict
+                case "IMG":
+                    dictionary = img_dict
+                case "VID":
+                    dictionary = vid_dict
+
             if item_name in TYPES:
-                dictionary = json.loads(os.getenv(item_name))
                 keys = list(dictionary.keys())
 
                 if keys != []:
@@ -155,7 +181,7 @@ async def on_message(message):
             else:
                 await message.channel.send(f"Type not found. Available types are: {TYPES}")
         except:
-            await message.channel.send("Error. Correct Syntax: -add TYPE<space>NAME<space>LINK")
+            await message.channel.send("Error. Correct Syntax: -add<space>TYPE<space>NAME<space>LINK")
 
     # removes items based on their type
     elif message.content.startswith("-rmv"):
@@ -192,10 +218,10 @@ async def on_message(message):
                 else:
                     await message.channel.send(f"{name} not found. Available names are: {keys}")
         except:
-            await message.channel.send("Error. Correct Syntax: -rmv TYPE<space>NAME")
+            await message.channel.send("Error. Correct Syntax: -rmv<space>TYPE<space>NAME")
 
+    # replying with gifs
     elif message.content.startswith(":"):
-        # replying with gifs
         try:
             gif_name = message.content.replace(':', '')
 
@@ -211,8 +237,22 @@ async def on_message(message):
         except:
             await message.channel.send("Invalid prompt! Correct syntax: :GIF_NAME")
 
+    elif message.content.startswith("-set"):
+        try:
+            parts = message.content.split(' ')
+
+            presence_update_channel_id = parts[1]
+            
+            # adding it to the dotenv file
+            dotenv.set_key(".env", "PRESENCE_UPDATE_CHANNEL_ID", presence_update_channel_id)
+
+            await message.channel.send("Successful. ")
+        except Exception as Error:
+            print(Error)
+            await message.channel.send("Error. Correct Syntax: -set<space>CHANNEL_ID")
+
+    # replying with quotes
     elif message.content.startswith("-"):
-        # replying with quotes
         for x in QUOTE_LIST:
             # parsing the strings into user command style for comparing
             file_name = x.replace(f".txt", "")
@@ -232,22 +272,22 @@ async def on_message(message):
 # before and after represents the member that has changed presence;
 async def on_presence_update(before, after):
     # getting the channel id
-    dark_humor_channel = client.get_channel(DARK_HUMOR_CHANNEL_ID)
+    channel = client.get_channel(presence_update_channel_id)
 
     # prevents replying to bot's presence update
-    # also doesn't sends the messages if it's PERSONAL server
-    if not after.bot and after.guild.id != 1297961145440931882:
+    # doesn't update presence if the presence_update_channel is none
+    if not after.bot and presence_update_channel_id != 0:
         old_status = str(before.status)
         new_status = str(after.status)
 
         # if the user comes online
         if old_status == "offline" and new_status != "offline":
             # sends a greeting message
-            await dark_humor_channel.send(f"Welcome back, {after.name}.")
+            await channel.send(f"Welcome back, {after.name}.")
             
         # if the user goes offline
         elif old_status != "offline" and new_status == "offline":     
-            await dark_humor_channel.send(f"Bye, {after.name}")
+            await channel.send(f"Bye, {after.name}")
 
 
 # starts the bot
