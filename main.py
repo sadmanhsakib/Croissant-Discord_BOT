@@ -24,6 +24,7 @@ client = discord.Client(intents=intents)
 # Getting the data from the .env files
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_LINK = os.getenv("REPO_LINK")
+INITIAL = os.getenv("INITIAL")
 SLEEP_TIME = int(os.getenv("SLEEP_TIME"))
 TYPES = os.getenv("TYPE").split(',')
 presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
@@ -34,9 +35,22 @@ QUOTES_FILE = "quote.txt"
 QUOTE_LIST = [QURAN_FILE, SUNNAH_FILE, QUOTES_FILE]
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
 
+# loading the dictionary into json format
 gif_dict = json.loads(os.getenv("GIF"))
 img_dict = json.loads(os.getenv("IMG"))
 vid_dict = json.loads(os.getenv("VID"))
+
+
+def get_dict(item_type):
+    # finding the right type of dictionary
+    match item_type:
+        case "GIF":
+            dictionary = gif_dict
+        case "IMG":
+            dictionary = img_dict
+        case "VID":
+            dictionary = vid_dict
+    return dictionary
 
 
 @client.event
@@ -70,6 +84,8 @@ async def on_message(message):
         return
     
     gif_names = list(gif_dict.keys())
+    img_names = list(img_dict.keys())
+    vid_names = list(vid_dict.keys())
 
     # stores the simple_commands
     message_dict = {
@@ -97,6 +113,7 @@ async def on_message(message):
     # deletes previous messages as per user request
     if message.content.startswith("-del"):
         try:
+            # extracting the data from the message
             parts = message.content.split(' ')
             amount = int(parts[1])
 
@@ -108,150 +125,158 @@ async def on_message(message):
     # replies with the list of objects as per user request
     elif message.content.startswith("-list"):
         try:
+            # extracting the data from the message
             parts = message.content.split(' ')
-            item_name = parts[1].upper()
-
-            match item_name:
-                case "GIF":
-                    dictionary = gif_dict
-                case "IMG":
-                    dictionary = img_dict
-                case "VID":
-                    dictionary = vid_dict
-
-            if item_name in TYPES:
+            item_type = parts[1].upper()
+            
+            if item_type in TYPES:
+                # getting the correct dictionary
+                dictionary = get_dict(item_type)
+                # getting the keys from dictionary and converting it to a list
                 keys = list(dictionary.keys())
-
+                
+                # checking if the keys are empty or not
                 if keys != []:
-                    await message.channel.send(f"Available {item_name}s are: {keys}")
+                    await message.channel.send(f"Available {item_type}s are: {keys}")
                 else:
-                    await message.channel.send("Empty. ")
+                    await message.channel.send("Empty.")
             else:
-                await message.channel.send(f"{item_name} doesn't exists. ")
+                await message.channel.send(f"{item_type} doesn't exist.")
         except:
             await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME")
-                
+    
+    # greets user with an item in TYPES
     elif message.content.startswith("-greet"):
         try:
+            # extracing the data for the message
             parts = message.content.split(' ')
-            if len(parts) == 3:
-                gif_name = parts[2]
+
+            if len(parts) == 4:
                 user_name = parts[1]
-            elif len(parts) == 2:
-                gif_name = "greet1"
+                item_type = parts[2].upper()
+                item_name = parts[3]
+            elif len(parts) == 3:
                 user_name = parts[1]
+                item_type = parts[2].upper()
+                item_name = "greet1"
             
-            if gif_name in gif_names:
-                await message.channel.send(f"Hello, {user_name}")
-                await message.channel.send(gif_dict[gif_name], delete_after=SLEEP_TIME)
-            elif gif_name not in gif_names:
-                await message.channel.send(f"There is no '{gif_name}' in gif_storage.")
-                await message.channel.send(f"Available gifs are: {gif_names}")
+            if item_type in TYPES:
+                # getting the correct dictionary
+                dictionary = get_dict(item_type)
+                # getting the keys from dictionary and converting it to a list
+                keys = list(dictionary.keys())
+                
+                # checking if the item exists
+                if item_name in dictionary:
+                    await message.channel.send(f"Hello, {user_name}")
+                    await message.channel.send(dictionary[item_name], delete_after=SLEEP_TIME)
+                else:
+                    await message.channel.send(f"There is no '{item_name}' in {item_type}_STORAGE.")
+                    await message.channel.send(f"Available {item_type}s are: {keys}")
         except:
-            await message.channel.send("Invalid. Syntax: -greet<space>USERNAME<space><GIF_NAME")
+            await message.channel.send("Invalid. Syntax: -greet<space>USERNAME<space>TYPE<space><ITEM_NAME")
 
     # adds items based on their type
     elif message.content.startswith("-add"):
         try:
+            # extracing the data for the message
             parts = message.content.split(' ')
-            type = parts[1].upper()
-            name = parts[2]
+            item_type = parts[1].upper()
+            item_name = parts[2]
             link = parts[3]
 
-            # acquiring the correct sort of dictionary
-            match type:
-                case "GIF":
-                    dictionary = gif_dict
-                case "IMG":
-                    dictionary = img_dict
-                case "VID":
-                    dictionary = vid_dict
-
-            if type in TYPES:
+            if item_type in TYPES:
+                # getting the correct dictionary
+                dictionary = get_dict(item_type)
                 # adding the items to the dictionary
-                dictionary.update({name: link})
+                dictionary.update({item_name: link})
 
                 # dumping the whole dict in a string
                 updated = json.dumps(dictionary, ensure_ascii=False)
                 
                 # saving the data in the .env file
-                dotenv.set_key(".env", type, updated)
+                dotenv.set_key(".env", item_type, updated)
                 
-                await message.channel.send(f"{type}: {name} added successfully.")
+                await message.channel.send(f"{item_type}: {item_name} added successfully.")
             else:
                 await message.channel.send(f"Type not found. Available types are: {TYPES}")
-        except:
+        except Exception as error:
+            print(error)
             await message.channel.send("Error. Correct Syntax: -add<space>TYPE<space>NAME<space>LINK")
 
     # removes items based on their type
     elif message.content.startswith("-rmv"):
         try:
+            # extracing the data for the message
             parts = message.content.split(' ')
-            type = parts[1].upper()
-            name = parts[2]
+            item_type = parts[1].upper()
+            item_name = parts[2]
 
-            # acquiring the correct sort of dictionary
-            match type:
-                case "GIF":
-                    dictionary = gif_dict
-                case "IMG":
-                    dictionary = img_dict
-                case "VID":
-                    dictionary = vid_dict
-
+            # getting the correct dictionary
+            dictionary = get_dict(item_type)
+            # getting the keys from dictionary and converting it to a list
             keys = list(dictionary.keys())
 
-            if type in TYPES and name in keys:
+            if item_type in TYPES and item_name in keys:
+
                 # removing the item from the dictionary
-                dictionary.pop(name)
+                dictionary.pop(item_name)
 
                 # dumping the whole dict in a string
                 updated = json.dumps(dictionary, ensure_ascii=False)
 
                 # adding the items to the dictionary
-                dotenv.set_key(".env", type, updated)
+                dotenv.set_key(".env", item_type, updated)
                 
-                await message.channel.send(f"{type}: {name} removed successfully.")
+                await message.channel.send(f"{item_type}: {item_name} removed successfully.")
             else:
-                if type not in TYPES:
+                if item_type not in TYPES:
                     await message.channel.send(f"Type not found. Available types are: {TYPES}")
                 else:
-                    await message.channel.send(f"{name} not found. Available names are: {keys}")
+                    await message.channel.send(f"{item_name} not found. Available names are: {keys}")
         except:
             await message.channel.send("Error. Correct Syntax: -rmv<space>TYPE<space>NAME")
 
-    # replying with gifs
-    elif message.content.startswith(":"):
+    # replying to item requests
+    elif message.content.startswith(INITIAL):
         try:
-            gif_name = message.content.replace(':', '')
+            item_name = message.content.replace(INITIAL, '')
 
-            if gif_name == "":
-                await message.channel.send("Invalid prompt! Corrent syntax: :GIF_NAME")
-            elif gif_name in gif_names:
-                if gif_name == "clanker":
+            if item_name == "":
+                Exception
+            elif item_name in gif_names:
+                if item_name == "clanker":
                     await message.add_reaction("💢")
 
+                # sending the correct gif 
                 for key in gif_dict.keys():
-                    if gif_name == key:
-                        await message.channel.send(gif_dict[gif_name], delete_after=SLEEP_TIME)
+                    if item_name == key:
+                        await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
+            elif item_name in img_names:
+                # sending the correct image
+                for key in img_dict.keys():
+                    if item_name == key:
+                        await message.channel.send(img_dict[item_name], delete_after=SLEEP_TIME)
+            elif item_name in vid_names:
+                # sending the correct video
+                for key in vid_dict.keys():
+                    if item_name == key:
+                        await message.channel.send(vid_dict[item_name], delete_after=SLEEP_TIME)
             else:
-                await message.channel.send(f"There is no '{gif_name}' in gif_storage. ")
-                await message.channel.send(f"Available gifs are: {gif_names}")
+                await message.channel.send(f"There is no '{item_name}' in storage. ")
+                await message.channel.send("Use -list<space>ITEM_TYPE to get the list of names.")
         except:
-            await message.channel.send("Invalid prompt! Correct syntax: :GIF_NAME")
+            await message.channel.send(f"Invalid prompt! Correct syntax: {INITIAL}ITEM_NAME")
 
     elif message.content.startswith("-set"):
         try:
             parts = message.content.split(' ')
 
-            presence_update_channel_id = parts[1]
-            
             # adding it to the dotenv file
-            dotenv.set_key(".env", "PRESENCE_UPDATE_CHANNEL_ID", presence_update_channel_id)
+            dotenv.set_key(".env", "PRESENCE_UPDATE_CHANNEL_ID", parts[1])
 
-            await message.channel.send("Successful. ")
-        except Exception as Error:
-            print(Error)
+            await message.channel.send("Presence Update Channel set successfully.")
+        except:
             await message.channel.send("Error. Correct Syntax: -set<space>CHANNEL_ID")
 
     # replying with quotes
@@ -279,7 +304,7 @@ async def on_presence_update(before, after):
 
     # prevents replying to bot's presence update
     # doesn't update presence if the presence_update_channel is none
-    if not after.bot and presence_update_channel_id != 0:
+    if not after.bot and int(presence_update_channel_id) != 0:
         old_status = str(before.status)
         new_status = str(after.status)
 
@@ -287,7 +312,6 @@ async def on_presence_update(before, after):
         if old_status == "offline" and new_status != "offline":
             # sends a greeting message
             await channel.send(f"Welcome back, {after.name}.")
-            
         # if the user goes offline
         elif old_status != "offline" and new_status == "offline":     
             await channel.send(f"Bye, {after.name}")
