@@ -21,24 +21,21 @@ intents.guilds = True
 
 client = discord.Client(intents=intents)
 
-# Getting the data from the .env files
+# Getting the data from the default .env files
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_LINK = os.getenv("REPO_LINK")
-INITIAL = os.getenv("INITIAL")
-SLEEP_TIME = int(os.getenv("SLEEP_TIME"))
-TYPES = os.getenv("TYPE").split(',')
+
 presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
-
-QURAN_FILE = "quran.txt"
-SUNNAH_FILE = "sunnah.txt"
-QUOTES_FILE = "quote.txt"
-QUOTE_LIST = [QURAN_FILE, SUNNAH_FILE, QUOTES_FILE]
-TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
-
+initial = os.getenv("INITIAL")
+TYPES = os.getenv("TYPE").split(',')
 # loading the dictionary into json format
+SLEEP_TIME = int(os.getenv("SLEEP_TIME"))
 gif_dict = json.loads(os.getenv("GIF"))
 img_dict = json.loads(os.getenv("IMG"))
 vid_dict = json.loads(os.getenv("VID"))
+
+QUOTES = ["quran.txt", "sunnah.txt", "quote.txt"]
+TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
 
 
 def get_dict(item_type):
@@ -68,8 +65,8 @@ async def on_guild_join(guild):
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
         await channel.send("Thank you for adding Croissant!")
-        await channel.send("Type: -help; to get the command list.")
-        await channel.send(f"You can learn more about me from here: {REPO_LINK}")
+        await channel.send(f'Type: "{initial}help" to get the command list.')
+        await channel.send(f"You can learn more about the BOT from here: {REPO_LINK}")
 
         # instructing the users on how to set up the channel
         await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
@@ -89,8 +86,8 @@ async def on_message(message):
 
     # stores the simple_commands
     message_dict = {
-        "-hello": f"Good day, {message.author.mention}. Hope you are having a fantastic day. ",
-        "-status": "Active."
+        f"{initial}hello": f"Good day, {message.author.mention}. Hope you are having a fantastic day. ",
+        f"{initial}status": "Active."
     }
 
     help = "Command list:\n"
@@ -100,10 +97,17 @@ async def on_message(message):
         help += f"{k}\n"
 
     # stores all the complex_commands name in help
-    help += "-del\n:GIF_NAME\n-list<space>ITEM_NAME\n-add gif<space>NAME<space>link\n-rmv gif<space>NAME\n-quran\n-quote\n-sunnah"
+    help += f"""`{initial}del number_of_messages_to_delete`
+`{initial}list ITEM_NAME`
+`{initial}ITEM_NAME`
+`{initial}greet USERNAME TYPE NAME`
+`{initial}add TYPE NAME LINK`
+`{initial}rmv TYPE NAME`
+`{initial}set VARIABLE VALUE`
+`{initial}randomline (Quran/Sunnah/Quote)`"""
     
     # adding the help section to the dict
-    message_dict.update({"-help": help})
+    message_dict.update({f"{initial}help": help})
 
     # replies to user messages
     for msg in message_dict:
@@ -111,7 +115,7 @@ async def on_message(message):
             await message.channel.send(message_dict[msg])
 
     # deletes previous messages as per user request
-    if message.content.startswith("-del"):
+    if message.content.startswith(f"{initial}del"):
         try:
             # extracting the data from the message
             parts = message.content.split(' ')
@@ -120,10 +124,10 @@ async def on_message(message):
             # +1 to remove the command itself
             await message.channel.purge(limit=amount+1)
         except:
-            await message.channel.send("Invalid command. Correct Syntax: -del<space>[Number of Messages to Remove]. ")
+            await message.channel.send(f"Invalid command. Correct Syntax: `{initial}del number_of_messages_to_delete`")
 
     # replies with the list of objects as per user request
-    elif message.content.startswith("-list"):
+    elif message.content.startswith(f"{initial}list"):
         try:
             # extracting the data from the message
             parts = message.content.split(' ')
@@ -143,14 +147,15 @@ async def on_message(message):
             else:
                 await message.channel.send(f"{item_type} doesn't exist.")
         except:
-            await message.channel.send("Invalid command. Correct Syntax: -list<space>ITEM_NAME")
+            await message.channel.send(f"Invalid command. Correct Syntax: `{initial}list ITEM_NAME`")
     
     # greets user with an item in TYPES
-    elif message.content.startswith("-greet"):
+    elif message.content.startswith(f"{initial}greet"):
         try:
             # extracing the data for the message
             parts = message.content.split(' ')
 
+            # checking if the user has given any GIFs or not
             if len(parts) == 4:
                 user_name = parts[1]
                 item_type = parts[2].upper()
@@ -174,10 +179,10 @@ async def on_message(message):
                     await message.channel.send(f"There is no '{item_name}' in {item_type}_STORAGE.")
                     await message.channel.send(f"Available {item_type}s are: {keys}")
         except:
-            await message.channel.send("Invalid. Syntax: -greet<space>USERNAME<space>TYPE<space><ITEM_NAME")
+            await message.channel.send(f"Invalid. Correct Syntax: `{initial}greet USERNAME TYPE NAME`")
 
     # adds items based on their type
-    elif message.content.startswith("-add"):
+    elif message.content.startswith(f"{initial}add"):
         try:
             # extracing the data for the message
             parts = message.content.split(' ')
@@ -202,10 +207,10 @@ async def on_message(message):
                 await message.channel.send(f"Type not found. Available types are: {TYPES}")
         except Exception as error:
             print(error)
-            await message.channel.send("Error. Correct Syntax: -add<space>TYPE<space>NAME<space>LINK")
+            await message.channel.send(f"Error. Correct Syntax: `{initial}add TYPE NAME LINK`")
 
     # removes items based on their type
-    elif message.content.startswith("-rmv"):
+    elif message.content.startswith(f"{initial}rmv"):
         try:
             # extracing the data for the message
             parts = message.content.split(' ')
@@ -217,8 +222,8 @@ async def on_message(message):
             # getting the keys from dictionary and converting it to a list
             keys = list(dictionary.keys())
 
+            # checking if the item actually exists
             if item_type in TYPES and item_name in keys:
-
                 # removing the item from the dictionary
                 dictionary.pop(item_name)
 
@@ -235,13 +240,50 @@ async def on_message(message):
                 else:
                     await message.channel.send(f"{item_name} not found. Available names are: {keys}")
         except:
-            await message.channel.send("Error. Correct Syntax: -rmv<space>TYPE<space>NAME")
+            await message.channel.send(f"Error. Correct Syntax: `{initial}rmv TYPE NAME`")
+
+    # changes the .env data as per user request
+    elif message.content.startswith(f"{initial}set"):
+        try:
+            # extracting the data from the message
+            parts = message.content.split(' ')
+            variable = parts[1]
+            value = parts[2]
+
+            # adding it to the dotenv file
+            dotenv.set_key(f".env", variable, value)
+
+            await message.channel.send("Presence Update Channel set successfully.")
+        except:
+            await message.channel.send(f"Error. Correct Syntax: `{initial}set VARIABLE VALUE`")
+
+    # replying with quotes
+    elif message.content.startswith(f"{initial}randomline"):
+        try:
+            # extracting the data from user message
+            parts = message.content.split(' ')
+            item_name = parts[1]
+            file_name = item_name + ".txt"
+
+            if file_name in QUOTES:
+                # since Bengali alphabet is in unicode, we need to open the file in unicode
+                with open(file_name, 'r', encoding="utf-8") as file:
+                    lines = file.readlines()
+            
+                    # sending a random line from the user's desired type
+                    await message.channel.send(lines[random.randint(0, (len(lines)-1))])
+            else:
+                await message.channel.send(f"{item_name} not found. Available files are: {QUOTES}")
+        except:
+            await message.channel.send(f"Invalid. Correct Syntax: `{initial}randomline (Quran/Sunnah/Quote)`")
 
     # replying to item requests
-    elif message.content.startswith(INITIAL):
+    elif message.content.startswith(initial):
         try:
-            item_name = message.content.replace(INITIAL, '')
+            # extracting the item_name from the message
+            item_name = message.content.replace(initial, '')
 
+            # if the input is null, then create an Error
             if item_name == "":
                 Exception
             elif item_name in gif_names:
@@ -249,51 +291,24 @@ async def on_message(message):
                     await message.add_reaction("💢")
 
                 # sending the correct gif 
-                for key in gif_dict.keys():
-                    if item_name == key:
+                for quote in gif_dict.keys():
+                    if item_name == quote:
                         await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
             elif item_name in img_names:
                 # sending the correct image
-                for key in img_dict.keys():
-                    if item_name == key:
+                for quote in img_dict.keys():
+                    if item_name == quote:
                         await message.channel.send(img_dict[item_name], delete_after=SLEEP_TIME)
             elif item_name in vid_names:
                 # sending the correct video
-                for key in vid_dict.keys():
-                    if item_name == key:
+                for quote in vid_dict.keys():
+                    if item_name == quote:
                         await message.channel.send(vid_dict[item_name], delete_after=SLEEP_TIME)
             else:
                 await message.channel.send(f"There is no '{item_name}' in storage. ")
                 await message.channel.send("Use -list<space>ITEM_TYPE to get the list of names.")
         except:
-            await message.channel.send(f"Invalid prompt! Correct syntax: {INITIAL}ITEM_NAME")
-
-    elif message.content.startswith("-set"):
-        try:
-            parts = message.content.split(' ')
-
-            # adding it to the dotenv file
-            dotenv.set_key(".env", "PRESENCE_UPDATE_CHANNEL_ID", parts[1])
-
-            await message.channel.send("Presence Update Channel set successfully.")
-        except:
-            await message.channel.send("Error. Correct Syntax: -set<space>CHANNEL_ID")
-
-    # replying with quotes
-    elif message.content.startswith("-"):
-        for x in QUOTE_LIST:
-            # parsing the strings into user command style for comparing
-            file_name = x.replace(f".txt", "")
-            file_name = "-" + file_name
-
-            if message.content == file_name:
-                # since Bengali alphabet is in unicode, we need to open the file in unicode
-                with open(x, "r", encoding="utf-8") as file:
-                    lines = file.readlines()
-                    
-                    # sending a random line from the user's desired type
-                    await message.channel.send(lines[random.randint(0, (len(lines)-1))])
-
+            await message.channel.send(f"Invalid prompt! Correct syntax: `{initial}ITEM_NAME`")
 
 @client.event
 # called when a member of the server changes their activity
