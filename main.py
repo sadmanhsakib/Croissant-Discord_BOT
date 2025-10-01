@@ -28,8 +28,8 @@ REPO_LINK = os.getenv("REPO_LINK")
 presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
 initial = os.getenv("INITIAL")
 TYPES = os.getenv("TYPE").split(',')
-# loading the dictionary into json format
 SLEEP_TIME = int(os.getenv("SLEEP_TIME"))
+# loading the dictionary into json format
 gif_dict = json.loads(os.getenv("GIF"))
 img_dict = json.loads(os.getenv("IMG"))
 vid_dict = json.loads(os.getenv("VID"))
@@ -90,21 +90,18 @@ async def on_message(message):
         f"{initial}status": "Active."
     }
 
-    help = "Command list:\n"
-
-    # stores all the simple_command's name in help
-    for k in message_dict:
-        help += f"{k}\n"
-
-    # stores all the complex_commands name in help
-    help += f"""`{initial}del number_of_messages_to_delete`
-`{initial}list ITEM_NAME`
-`{initial}ITEM_NAME`
-`{initial}greet USERNAME TYPE NAME`
-`{initial}add TYPE NAME LINK`
-`{initial}rmv TYPE NAME`
-`{initial}set VARIABLE VALUE`
-`{initial}randomline (Quran/Sunnah/Quote)`"""
+    # stores all the command guides
+    help = f"""```Command List:
+{initial}hello
+{initial}status
+;ITEM_NAME
+{initial}del number_of_messages_to_delete
+{initial}list ITEM_NAME
+{initial}greet USERNAME TYPE NAME
+{initial}add TYPE NAME LINK
+{initial}rmv TYPE NAME
+{initial}set VARIABLE VALUE
+{initial}randomline quran/sunnah/quote```"""
     
     # adding the help section to the dict
     message_dict.update({f"{initial}help": help})
@@ -113,6 +110,10 @@ async def on_message(message):
     for msg in message_dict:
         if message.content.startswith(msg):
             await message.channel.send(message_dict[msg])
+
+    # reacting to hate messages
+    if message.content.__contains__("clanker"):
+        await message.add_reaction("💢")
 
     # deletes previous messages as per user request
     if message.content.startswith(f"{initial}del"):
@@ -275,40 +276,31 @@ async def on_message(message):
             else:
                 await message.channel.send(f"{item_name} not found. Available files are: {QUOTES}")
         except:
-            await message.channel.send(f"Invalid. Correct Syntax: `{initial}randomline (Quran/Sunnah/Quote)`")
+            await message.channel.send(f"Invalid. Correct Syntax: `{initial}randomline quran/sunnah/quote`")
 
     # replying to item requests
-    elif message.content.startswith(initial):
+    elif message.content.startswith(';'):
         try:
             # extracting the item_name from the message
-            item_name = message.content.replace(initial, '')
+            item_name = message.content.replace(';', '')
 
             # if the input is null, then create an Error
             if item_name == "":
                 Exception
             elif item_name in gif_names:
-                if item_name == "clanker":
-                    await message.add_reaction("💢")
-
                 # sending the correct gif 
-                for quote in gif_dict.keys():
-                    if item_name == quote:
-                        await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
             elif item_name in img_names:
                 # sending the correct image
-                for quote in img_dict.keys():
-                    if item_name == quote:
-                        await message.channel.send(img_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(img_dict[item_name], delete_after=SLEEP_TIME)
             elif item_name in vid_names:
                 # sending the correct video
-                for quote in vid_dict.keys():
-                    if item_name == quote:
-                        await message.channel.send(vid_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(vid_dict[item_name], delete_after=SLEEP_TIME)
             else:
                 await message.channel.send(f"There is no '{item_name}' in storage. ")
-                await message.channel.send("Use -list<space>ITEM_TYPE to get the list of names.")
+                await message.channel.send("Use `-list ITEM_TYPE` to get the list of names.")
         except:
-            await message.channel.send(f"Invalid prompt! Correct syntax: `{initial}ITEM_NAME`")
+            await message.channel.send(f"Invalid prompt! Correct syntax: `';'ITEM_NAME`")
 
 @client.event
 # called when a member of the server changes their activity
