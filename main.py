@@ -25,6 +25,7 @@ client = discord.Client(intents=intents)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_LINK = os.getenv("REPO_LINK")
 
+# declaring the variables for the server specific datas
 presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
 initial = os.getenv("INITIAL")
 TYPES = os.getenv("TYPE").split(',')
@@ -56,12 +57,15 @@ async def on_ready():
     # prints a message in console when ready
     print(f"Logged in as: {client.user}")
 
+    guilds = client.guilds
+    
+
 
 @client.event
 async def on_guild_join(guild):
     # getting the general channel of the server that the BOT just joined
     channel = discord.utils.get(guild.text_channels, name="general")
-    
+
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
         await channel.send("Thank you for adding Croissant!")
@@ -97,7 +101,7 @@ async def on_message(message):
 ;ITEM_NAME
 {initial}del number_of_messages_to_delete
 {initial}list ITEM_NAME
-{initial}greet USERNAME TYPE NAME
+{initial}greet USERNAME NAME
 {initial}add TYPE NAME LINK
 {initial}rmv TYPE NAME
 {initial}set VARIABLE VALUE
@@ -142,7 +146,7 @@ async def on_message(message):
                 
                 # checking if the keys are empty or not
                 if keys != []:
-                    await message.channel.send(f"Available {item_type}s are: {keys}")
+                    await message.channel.send(f"```Available {item_type}s are:\n{keys}```")
                 else:
                     await message.channel.send("Empty.")
             else:
@@ -156,31 +160,28 @@ async def on_message(message):
             # extracing the data for the message
             parts = message.content.split(' ')
 
-            # checking if the user has given any GIFs or not
-            if len(parts) == 4:
+            # checking if the user has given any item_name
+            if len(parts) == 3:
                 user_name = parts[1]
-                item_type = parts[2].upper()
-                item_name = parts[3]
-            elif len(parts) == 3:
+                item_name = parts[2]
+            elif len(parts) == 2:
                 user_name = parts[1]
-                item_type = parts[2].upper()
                 item_name = "greet1"
-            
-            if item_type in TYPES:
-                # getting the correct dictionary
-                dictionary = get_dict(item_type)
-                # getting the keys from dictionary and converting it to a list
-                keys = list(dictionary.keys())
-                
-                # checking if the item exists
-                if item_name in dictionary:
-                    await message.channel.send(f"Hello, {user_name}")
-                    await message.channel.send(dictionary[item_name], delete_after=SLEEP_TIME)
-                else:
-                    await message.channel.send(f"There is no '{item_name}' in {item_type}_STORAGE.")
-                    await message.channel.send(f"Available {item_type}s are: {keys}")
+
+            if item_name in gif_names:
+                # sending the correct gif 
+                await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
+            elif item_name in img_names:
+                # sending the correct image
+                await message.channel.send(img_dict[item_name], delete_after=SLEEP_TIME)
+            elif item_name in vid_names:
+                # sending the correct video
+                await message.channel.send(vid_dict[item_name], delete_after=SLEEP_TIME)
+            else:
+                await message.channel.send(f"There is no '{item_name}' in storage. ")
+                await message.channel.send("Use `-list ITEM_TYPE` to get the list of names.")
         except:
-            await message.channel.send(f"Invalid. Correct Syntax: `{initial}greet USERNAME TYPE NAME`")
+            await message.channel.send(f"Invalid. Correct Syntax: `{initial}greet USERNAME NAME`")
 
     # adds items based on their type
     elif message.content.startswith(f"{initial}add"):
@@ -252,7 +253,7 @@ async def on_message(message):
             value = parts[2]
 
             # adding it to the dotenv file
-            dotenv.set_key(f".env", variable, value)
+            dotenv.set_key(f"{message.guild.id}.env", variable, value)
 
             await message.channel.send("Presence Update Channel set successfully.")
         except:
