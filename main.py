@@ -168,6 +168,8 @@ async def on_message(message):
                 user_name = parts[1]
                 item_name = "greet1"
 
+            await message.channel.send(f"Hello, {user_name}")
+            
             if item_name in gif_names:
                 # sending the correct gif 
                 await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
