@@ -11,8 +11,8 @@ USERNAME = os.getenv("REDDIT_USERNAME")
 PASSWORD = os.getenv("REDDIT_PASSWORD")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("SECRET")
+COUNTER = int(os.getenv("COUNTER"))
 USER_AGENT = "Pain au Chocolat (by u/Herr_Sakib)"
-
 reddit = None
 
 def authenticate():
@@ -37,7 +37,7 @@ def get_meme(subreddit_name):
     subreddit = reddit.subreddit(subreddit_name)
     
     # getting a random post from the subreddit
-    for submission in subreddit.top(limit=50):
+    for submission in subreddit.hot(limit=COUNTER):
         # checking if the post is an image or gif
         if submission.url.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff')):
             urls.append(submission.url)

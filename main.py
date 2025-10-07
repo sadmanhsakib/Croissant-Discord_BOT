@@ -201,6 +201,7 @@ async def on_message(message):
             if len(parts) == 2:
                 subreddit_name = parts[1]
             else:
+                # setting the default subreddit
                 subreddit_name = "dankmemes"
 
             # getting the meme url
@@ -208,8 +209,6 @@ async def on_message(message):
             await message.channel.send(meme_url)
         except:
             await message.channel.send(f"{subreddit_name} not found.")
-
-
 
     # adds items based on their type
     elif message.content.startswith(f"{prefix}add"):
@@ -291,6 +290,8 @@ async def on_message(message):
                     shouldUpdate = True
                 case "SLEEP_TIME":
                     sleep_time = int(value)
+                    shouldUpdate = True
+                case "COUNTER":
                     shouldUpdate = True
             
             if shouldUpdate:
