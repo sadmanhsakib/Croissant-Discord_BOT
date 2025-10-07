@@ -207,7 +207,8 @@ async def on_message(message):
             meme_url = reddit.get_meme(subreddit_name)
             await message.channel.send(meme_url)
         except:
-            await message.channel.send(f"Error. Correct Syntax: `{prefix}meme Subreddit_NAME(optional)`")
+            await message.channel.send(f"{subreddit_name} not found.")
+
 
 
     # adds items based on their type
