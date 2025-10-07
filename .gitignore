@@ -10,6 +10,8 @@ __pycache__/
 .Python
 .env
 test.py
+database.py
+main-copy.py
 build/
 develop-eggs/
 dist/

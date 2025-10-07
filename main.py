@@ -3,8 +3,9 @@ import random
 import os
 import dotenv
 import json
+import reddit
 
-# loading .env file
+# loading the universal .env file
 dotenv.load_dotenv(".env")
 
 # for running the bot as a web 
@@ -21,15 +22,15 @@ intents.guilds = True
 
 client = discord.Client(intents=intents)
 
-# Getting the data from the default .env files
+# getting the data from the .env files
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-REPO_LINK = os.getenv("REPO_LINK")
-
-# declaring the variables for the server specific datas
-presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
-initial = os.getenv("INITIAL")
+REPO_URL = os.getenv("REPO_URL")
 TYPES = os.getenv("TYPE").split(',')
+
+# getting the server specific data from their .env files
+prefix = os.getenv("PREFIX")
 sleep_time = int(os.getenv("SLEEP_TIME"))
+presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
 
 # loading the dictionary into json format
 gif_dict = json.loads(os.getenv("GIF"))
@@ -55,11 +56,11 @@ def get_dict(item_type):
 @client.event
 # when the bot starts 
 async def on_ready():
-    # prints a message in console when ready
-    print(f"Logged in as: {client.user}")
-
-    guilds = client.guilds
+    # initializing the reddit instance
+    reddit.authenticate()
     
+    # prints a message in console when ready
+    print(f"✅Logged in as: {client.user}")
 
 
 @client.event
@@ -70,8 +71,8 @@ async def on_guild_join(guild):
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
         await channel.send("Thank you for adding Croissant!")
-        await channel.send(f'Type: "{initial}help" to get the command list.')
-        await channel.send(f"You can learn more about the BOT from here: {REPO_LINK}")
+        await channel.send(f'Type: "{prefix}help" to get the command list.')
+        await channel.send(f"You can learn more about the BOT from here: {REPO_URL}")
 
         # instructing the users on how to set up the channel
         await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
@@ -83,9 +84,8 @@ async def on_guild_join(guild):
 async def on_message(message):
     # making the variables global to avoid issues
     global presence_update_channel_id
-    global initial
+    global prefix
     global sleep_time
-    
     
     # prevents the bot from replying on its own messages
     if message.author == client.user:
@@ -97,25 +97,26 @@ async def on_message(message):
 
     # stores the simple_commands
     message_dict = {
-        f"{initial}hello": f"Good day, {message.author.mention}. Hope you are having a fantastic day. ",
-        f"{initial}status": "Active."
+        f"{prefix}hello": f"Good day, {message.author.mention}. Hope you are having a fantastic day. ",
+        f"{prefix}status": "Active."
     }
 
     # stores all the command syntax
     help = f"""```Command List:
-{initial}hello
-{initial}status
+{prefix}hello
+{prefix}status
 ;ITEM_NAME
-{initial}del number_of_messages_to_delete
-{initial}list ITEM_NAME
-{initial}greet USERNAME NAME
-{initial}add TYPE NAME LINK
-{initial}rmv TYPE NAME
-{initial}set VARIABLE VALUE
-{initial}randomline quran/sunnah/quote```"""
+{prefix}del number_of_messages_to_delete
+{prefix}list ITEM_NAME
+{prefix}greet USERNAME NAME
+{prefix}meme Subreddit_NAME(optional)
+{prefix}add TYPE NAME LINK
+{prefix}rmv TYPE NAME
+{prefix}set VARIABLE VALUE
+{prefix}randomline quran/sunnah/quote```"""
     
     # adding the help section to the dict
-    message_dict.update({f"{initial}help": help})
+    message_dict.update({f"{prefix}help": help})
 
     # replies to user messages
     for msg in message_dict:
@@ -123,11 +124,11 @@ async def on_message(message):
             await message.channel.send(message_dict[msg])
 
     # reacting to hate messages
-    if message.content.__contains__("clanker"):
+    if message.content.lower().__contains__("clanker"):
         await message.add_reaction("💢")
 
     # deletes previous messages as per user request
-    if message.content.startswith(f"{initial}del"):
+    if message.content.startswith(f"{prefix}del"):
         try:
             # extracting the data from the message
             parts = message.content.split(' ')
@@ -136,10 +137,10 @@ async def on_message(message):
             # +1 to remove the command itself
             await message.channel.purge(limit=amount+1)
         except:
-            await message.channel.send(f"Invalid command. Correct Syntax: `{initial}del number_of_messages_to_delete`")
+            await message.channel.send(f"Invalid command. Correct Syntax: `{prefix}del number_of_messages_to_delete`")
 
     # replies with the list of objects as per user request
-    elif message.content.startswith(f"{initial}list"):
+    elif message.content.startswith(f"{prefix}list"):
         try:
             # extracting the data from the message
             parts = message.content.split(' ')
@@ -157,12 +158,12 @@ async def on_message(message):
                 else:
                     await message.channel.send("Empty.")
             else:
-                await message.channel.send(f"{item_type} doesn't exist.")
+                await message.channel.send(f"{item_type} not found.")
         except:
-            await message.channel.send(f"Invalid command. Correct Syntax: `{initial}list ITEM_NAME`")
+            await message.channel.send(f"Invalid command. Correct Syntax: `{prefix}list ITEM_NAME`")
     
     # greets user with an item in TYPES
-    elif message.content.startswith(f"{initial}greet"):
+    elif message.content.startswith(f"{prefix}greet"):
         try:
             # extracing the data for the message
             parts = message.content.split(' ')
@@ -190,10 +191,27 @@ async def on_message(message):
                 await message.channel.send(f"There is no '{item_name}' in storage. ")
                 await message.channel.send("Use `-list ITEM_TYPE` to get the list of names.")
         except:
-            await message.channel.send(f"Invalid. Correct Syntax: `{initial}greet USERNAME NAME`")
+            await message.channel.send(f"Invalid. Correct Syntax: `{prefix}greet USERNAME NAME`")
+
+    # replies with a meme from various subreddit
+    elif message.content.startswith(f"{prefix}meme"):
+        try:
+            # extracting the data from the message
+            parts = message.content.split(' ')
+            if len(parts) == 2:
+                subreddit_name = parts[1]
+            else:
+                subreddit_name = "dankmemes"
+
+            # getting the meme url
+            meme_url = reddit.get_meme(subreddit_name)
+            await message.channel.send(meme_url)
+        except:
+            await message.channel.send(f"Error. Correct Syntax: `{prefix}meme Subreddit_NAME(optional)`")
+
 
     # adds items based on their type
-    elif message.content.startswith(f"{initial}add"):
+    elif message.content.startswith(f"{prefix}add"):
         try:
             # extracing the data for the message
             parts = message.content.split(' ')
@@ -218,10 +236,10 @@ async def on_message(message):
                 await message.channel.send(f"Type not found. Available types are: {TYPES}")
         except Exception as error:
             print(error)
-            await message.channel.send(f"Error. Correct Syntax: `{initial}add TYPE NAME LINK`")
+            await message.channel.send(f"Error. Correct Syntax: `{prefix}add TYPE NAME LINK`")
 
     # removes items based on their type
-    elif message.content.startswith(f"{initial}rmv"):
+    elif message.content.startswith(f"{prefix}rmv"):
         try:
             # extracing the data for the message
             parts = message.content.split(' ')
@@ -251,10 +269,10 @@ async def on_message(message):
                 else:
                     await message.channel.send(f"{item_name} not found. Available names are: {keys}")
         except:
-            await message.channel.send(f"Error. Correct Syntax: `{initial}rmv TYPE NAME`")
+            await message.channel.send(f"Error. Correct Syntax: `{prefix}rmv TYPE NAME`")
 
     # changes the .env data as per user request
-    elif message.content.startswith(f"{initial}set"):
+    elif message.content.startswith(f"{prefix}set"):
         try:
             # extracting the data from the message
             parts = message.content.split(' ')
@@ -267,8 +285,8 @@ async def on_message(message):
                 case "PRESENCE_UPDATE_CHANNEL_ID":
                     presence_update_channel_id = int(value)
                     shouldUpdate = True
-                case "INITIAL":
-                    initial = value
+                case "PREFIX":
+                    prefix = value
                     shouldUpdate = True
                 case "SLEEP_TIME":
                     sleep_time = int(value)
@@ -281,10 +299,10 @@ async def on_message(message):
             else:
                 await message.channel.send(f"Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, INITIAL, SLEEP_TIME") 
         except:
-            await message.channel.send(f"Error. Correct Syntax: `{initial}set VARIABLE VALUE`")
+            await message.channel.send(f"Error. Correct Syntax: `{prefix}set VARIABLE VALUE`")
 
     # replying with quotes
-    elif message.content.startswith(f"{initial}randomline"):
+    elif message.content.startswith(f"{prefix}randomline"):
         try:
             # extracting the data from user message
             parts = message.content.split(' ')
@@ -301,7 +319,7 @@ async def on_message(message):
             else:
                 await message.channel.send(f"{item_name} not found. Available files are: {QUOTES}")
         except:
-            await message.channel.send(f"Invalid. Correct Syntax: `{initial}randomline quran/sunnah/quote`")
+            await message.channel.send(f"Invalid. Correct Syntax: `{prefix}randomline quran/sunnah/quote`")
 
     # replying to item requests
     elif message.content.startswith(';'):
