@@ -29,7 +29,8 @@ REPO_LINK = os.getenv("REPO_LINK")
 presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
 initial = os.getenv("INITIAL")
 TYPES = os.getenv("TYPE").split(',')
-SLEEP_TIME = int(os.getenv("SLEEP_TIME"))
+sleep_time = int(os.getenv("SLEEP_TIME"))
+
 # loading the dictionary into json format
 gif_dict = json.loads(os.getenv("GIF"))
 img_dict = json.loads(os.getenv("IMG"))
@@ -172,13 +173,13 @@ async def on_message(message):
             
             if item_name in gif_names:
                 # sending the correct gif 
-                await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(gif_dict[item_name], delete_after=sleep_time)
             elif item_name in img_names:
                 # sending the correct image
-                await message.channel.send(img_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(img_dict[item_name], delete_after=sleep_time)
             elif item_name in vid_names:
                 # sending the correct video
-                await message.channel.send(vid_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(vid_dict[item_name], delete_after=sleep_time)
             else:
                 await message.channel.send(f"There is no '{item_name}' in storage. ")
                 await message.channel.send("Use `-list ITEM_TYPE` to get the list of names.")
@@ -251,13 +252,28 @@ async def on_message(message):
         try:
             # extracting the data from the message
             parts = message.content.split(' ')
-            variable = parts[1]
+            variable = parts[1].upper()
             value = parts[2]
-
-            # adding it to the dotenv file
-            dotenv.set_key(f"{message.guild.id}.env", variable, value)
-
-            await message.channel.send("Presence Update Channel set successfully.")
+            
+            shouldUpdate = False
+            
+            match variable:
+                case "PRESENCE_UPDATE_CHANNEL_ID":
+                    presence_update_channel_id = int(value)
+                    shouldUpdate = True
+                case "INITIAL":
+                    initial = value
+                    shouldUpdate = True
+                case "SLEEP_TIME":
+                    sleep_time = int(value)
+                    shouldUpdate = True
+            
+            if shouldUpdate:
+                # adding it to the dotenv file
+                dotenv.set_key(f".env", variable, value)
+                await message.channel.send("Presence Update Channel set successfully.")
+            else:
+                await message.channel.send(f"Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, INITIAL, SLEEP_TIME") 
         except:
             await message.channel.send(f"Error. Correct Syntax: `{initial}set VARIABLE VALUE`")
 
@@ -292,18 +308,18 @@ async def on_message(message):
                 Exception
             elif item_name in gif_names:
                 # sending the correct gif 
-                await message.channel.send(gif_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(gif_dict[item_name], delete_after=sleep_time)
             elif item_name in img_names:
                 # sending the correct image
-                await message.channel.send(img_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(img_dict[item_name], delete_after=sleep_time)
             elif item_name in vid_names:
                 # sending the correct video
-                await message.channel.send(vid_dict[item_name], delete_after=SLEEP_TIME)
+                await message.channel.send(vid_dict[item_name], delete_after=sleep_time)
             else:
                 await message.channel.send(f"There is no '{item_name}' in storage. ")
                 await message.channel.send("Use `-list ITEM_TYPE` to get the list of names.")
         except:
-            await message.channel.send(f"Invalid prompt! Correct syntax: `';'ITEM_NAME`")
+            await message.channel.send(f"Invalid prompt! Correct syntax: `;ITEM_NAME`")
 
 @client.event
 # called when a member of the server changes their activity
