@@ -81,6 +81,12 @@ async def on_guild_join(guild):
 @client.event
 # when the user sends a message in server
 async def on_message(message):
+    # making the variables global to avoid issues
+    global presence_update_channel_id
+    global initial
+    global sleep_time
+    
+    
     # prevents the bot from replying on its own messages
     if message.author == client.user:
         return
@@ -95,7 +101,7 @@ async def on_message(message):
         f"{initial}status": "Active."
     }
 
-    # stores all the command guides
+    # stores all the command syntax
     help = f"""```Command List:
 {initial}hello
 {initial}status
