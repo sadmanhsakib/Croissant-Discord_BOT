@@ -305,7 +305,7 @@ async def on_message(message):
                 
                 await message.channel.send(f"{variable} set to {value} successfully.")
             else:
-                await message.channel.send(f"Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, INITIAL, SLEEP_TIME") 
+                await message.channel.send(f"Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, PREFIX, SLEEP_TIME, COUNTER") 
         except:
             await message.channel.send(f"Error. Correct Syntax: `{prefix}set VARIABLE VALUE`")
 

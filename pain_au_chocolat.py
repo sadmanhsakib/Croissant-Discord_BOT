@@ -37,11 +37,10 @@ def get_meme(subreddit_name):
     # getting the subreddit
     subreddit = reddit.subreddit(subreddit_name)
     
-    
     # getting a random post from the subreddit
-    for submission in subreddit.hot(limit=COUNTER):
+    for submission in subreddit.new(limit=COUNTER):
         # checking if the post is an image or gif
-        if submission.url.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff')):
+        if submission.url.endswith(('.jpg', '.jpeg', '.png', '.gif')):
             urls.append(submission.url)
             
     # getting a random meme url from the list
