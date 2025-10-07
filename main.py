@@ -3,7 +3,7 @@ import random
 import os
 import dotenv
 import json
-import reddit
+import pain_au_chocolat
 
 # loading the universal .env file
 dotenv.load_dotenv(".env")
@@ -57,7 +57,7 @@ def get_dict(item_type):
 # when the bot starts 
 async def on_ready():
     # initializing the reddit instance
-    reddit.authenticate()
+    pain_au_chocolat.authenticate()
     
     # prints a message in console when ready
     print(f"✅Logged in as: {client.user}")
@@ -109,7 +109,7 @@ async def on_message(message):
 {prefix}del number_of_messages_to_delete
 {prefix}list ITEM_NAME
 {prefix}greet USERNAME NAME
-{prefix}meme Subreddit_NAME(optional)
+{prefix}reddit SUBREDDIT_NAME(optional)
 {prefix}add TYPE NAME LINK
 {prefix}rmv TYPE NAME
 {prefix}set VARIABLE VALUE
@@ -194,7 +194,7 @@ async def on_message(message):
             await message.channel.send(f"Invalid. Correct Syntax: `{prefix}greet USERNAME NAME`")
 
     # replies with a meme from various subreddit
-    elif message.content.startswith(f"{prefix}meme"):
+    elif message.content.startswith(f"{prefix}reddit"):
         try:
             # extracting the data from the message
             parts = message.content.split(' ')
@@ -204,9 +204,14 @@ async def on_message(message):
                 # setting the default subreddit
                 subreddit_name = "dankmemes"
 
-            # getting the meme url
-            meme_url = reddit.get_meme(subreddit_name)
-            await message.channel.send(meme_url)
+            # getting the meme data
+            meme_url = pain_au_chocolat.get_meme(subreddit_name)
+            
+            # removes the meme after sleep_time if the url is NSFW
+            if pain_au_chocolat.is_nsfw(subreddit_name):
+                await message.channel.send(meme_url, delete_after=sleep_time)
+            else:
+                await message.channel.send(meme_url)
         except:
             await message.channel.send(f"{subreddit_name} not found.")
 
@@ -297,7 +302,8 @@ async def on_message(message):
             if shouldUpdate:
                 # adding it to the dotenv file
                 dotenv.set_key(f".env", variable, value)
-                await message.channel.send("Presence Update Channel set successfully.")
+                
+                await message.channel.send(f"{variable} set to {value} successfully.")
             else:
                 await message.channel.send(f"Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, INITIAL, SLEEP_TIME") 
         except:

@@ -13,6 +13,7 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("SECRET")
 COUNTER = int(os.getenv("COUNTER"))
 USER_AGENT = "Pain au Chocolat (by u/Herr_Sakib)"
+
 reddit = None
 
 def authenticate():
@@ -36,6 +37,7 @@ def get_meme(subreddit_name):
     # getting the subreddit
     subreddit = reddit.subreddit(subreddit_name)
     
+    
     # getting a random post from the subreddit
     for submission in subreddit.hot(limit=COUNTER):
         # checking if the post is an image or gif
@@ -45,3 +47,9 @@ def get_meme(subreddit_name):
     # getting a random meme url from the list
     meme_url = urls[random.randint(0, len(urls) - 1)]
     return meme_url
+
+def is_nsfw(subreddit_name):
+    # getting the subreddit
+    subreddit = reddit.subreddit(subreddit_name)
+    
+    return subreddit.over18
