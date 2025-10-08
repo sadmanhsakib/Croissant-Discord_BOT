@@ -11,7 +11,6 @@ USERNAME = os.getenv("REDDIT_USERNAME")
 PASSWORD = os.getenv("REDDIT_PASSWORD")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("SECRET")
-COUNTER = int(os.getenv("COUNTER"))
 USER_AGENT = "Pain au Chocolat (by u/Herr_Sakib)"
 
 reddit = None
@@ -33,7 +32,8 @@ def authenticate():
 
 def get_meme(subreddit_name):
     urls = []
-    
+    COUNTER = int(os.getenv("COUNTER"))
+
     # getting the subreddit
     subreddit = reddit.subreddit(subreddit_name)
     
