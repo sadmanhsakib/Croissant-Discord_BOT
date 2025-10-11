@@ -1,8 +1,5 @@
-import discord
-import random
-import os
-import dotenv
-import json
+import os, json, random
+import discord, dotenv
 import pain_au_chocolat
 
 # loading the universal .env file
@@ -23,7 +20,8 @@ intents.guilds = True
 client = discord.Client(intents=intents)
 
 # getting the data from the .env files
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+#BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = "MTQyNTcxMTA2OTI2NzIzNDkxMg.GdnnEe.rX34GsZCcg9q9f57ZkzbJldES5AhCVIMcYf6dw"
 REPO_URL = os.getenv("REPO_URL")
 TYPES = os.getenv("TYPE").split(',')
 
@@ -39,7 +37,7 @@ vid_dict = json.loads(os.getenv("VID"))
 
 QUOTES = ["quran.txt", "sunnah.txt", "quote.txt"]
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
-
+fetch = None
 
 def get_dict(item_type):
     # finding the right type of dictionary
@@ -56,8 +54,13 @@ def get_dict(item_type):
 @client.event
 # when the bot starts 
 async def on_ready():
-    # initializing the reddit instance
-    pain_au_chocolat.authenticate()
+    global fetch
+    
+    # authenticating the reddit api
+    await pain_au_chocolat.authenticate()
+    
+    # creating a object
+    fetch = pain_au_chocolat.Fetch()
     
     # prints a message in console when ready
     print(f"✅Logged in as: {client.user}")
@@ -201,20 +204,27 @@ async def on_message(message):
             if len(parts) == 2:
                 subreddit_name = parts[1]
             else:
-                # setting the default subreddit
+                # using dankmemes as the default subreddit if user didn't input any subreddit
                 subreddit_name = "dankmemes"
 
-            # getting the meme data
-            meme_url = pain_au_chocolat.get_meme(subreddit_name)
+            # getting the item data
+            submission = await fetch.get_submission(subreddit_name)
+            
+            # giving the error message for permission error
+            if type(submission) == str:
+                await message.channel.send(submission)
+                return
             
             # removes the meme after sleep_time if the url is NSFW
-            if pain_au_chocolat.is_nsfw(subreddit_name):
-                await message.channel.send(meme_url, delete_after=sleep_time)
+            if submission.is_nsfw:
+                await message.channel.send(f"{submission.title} \nBy: {submission.author}")
+                await message.channel.send(submission.url, delete_after=sleep_time)
             else:
-                await message.channel.send(meme_url)
+                await message.channel.send(f"{submission.title} \nBy: {submission.author}")
+                await message.channel.send(submission.url)
         except:
             await message.channel.send(f"{subreddit_name} not found.")
-
+            
     # adds items based on their type
     elif message.content.startswith(f"{prefix}add"):
         try:
@@ -296,7 +306,16 @@ async def on_message(message):
                 case "SLEEP_TIME":
                     sleep_time = int(value)
                     shouldUpdate = True
-                case "COUNTER":
+                case "SEARCH_LIMIT":
+                    shouldUpdate = True
+                case "NSFW_ALLOWED":
+                    # parsing the user input
+                    if value.lower() == "true" :
+                        value = '1'
+                    elif value.lower() == "false":
+                        value = '0'
+                    else:
+                        ValueError
                     shouldUpdate = True
             
             if shouldUpdate:
