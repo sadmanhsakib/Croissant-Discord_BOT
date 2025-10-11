@@ -20,8 +20,7 @@ intents.guilds = True
 client = discord.Client(intents=intents)
 
 # getting the data from the .env files
-#BOT_TOKEN = os.getenv("BOT_TOKEN")
-BOT_TOKEN = "MTQyNTcxMTA2OTI2NzIzNDkxMg.GdnnEe.rX34GsZCcg9q9f57ZkzbJldES5AhCVIMcYf6dw"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_URL = os.getenv("REPO_URL")
 TYPES = os.getenv("TYPE").split(',')
 
