@@ -1,5 +1,5 @@
 import os, json, random
-import discord, dotenv
+import discord, dotenv, discord.ext 
 import pain_au_chocolat
 
 # loading the universal .env file
@@ -18,6 +18,7 @@ intents.members = True
 intents.guilds = True
 
 client = discord.Client(intents=intents)
+#client = discord.ext.commands.Bot(command_prefix=prefix, intents=intents)
 
 # getting the data from the .env files
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -36,7 +37,6 @@ vid_dict = json.loads(os.getenv("VID"))
 
 QUOTES = ["quran.txt", "sunnah.txt", "quote.txt"]
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
-fetch = None
 
 def get_dict(item_type):
     # finding the right type of dictionary
@@ -53,13 +53,10 @@ def get_dict(item_type):
 @client.event
 # when the bot starts 
 async def on_ready():
-    global fetch
+    global fetcher
     
     # authenticating the reddit api
     await pain_au_chocolat.authenticate()
-    
-    # creating a object
-    fetch = pain_au_chocolat.Fetch()
     
     # prints a message in console when ready
     print(f"✅Logged in as: {client.user}")
@@ -198,16 +195,17 @@ async def on_message(message):
     # replies with a meme from various subreddit
     elif message.content.startswith(f"{prefix}reddit"):
         try:
+            # creating a object
+            fetcher = pain_au_chocolat.Fetch()
+            
             # extracting the data from the message
             parts = message.content.split(' ')
-            if len(parts) == 2:
-                subreddit_name = parts[1]
-            else:
-                # using dankmemes as the default subreddit if user didn't input any subreddit
-                subreddit_name = "dankmemes"
+            if len(parts) != 2:
+                raise Exception
+            subreddit_name = parts[1]
 
             # getting the item data
-            submission = await fetch.get_submission(subreddit_name)
+            submission = await fetcher.get_submission(subreddit_name)
             
             # giving the error message for permission error
             if type(submission) == str:
@@ -222,7 +220,7 @@ async def on_message(message):
                 await message.channel.send(f"{submission.title} \nBy: {submission.author}")
                 await message.channel.send(submission.url)
         except:
-            await message.channel.send(f"{subreddit_name} not found.")
+            await message.channel.send(f"Invalid. Correct Syntax: `{prefix}reddit SUBREDDIT_NAME`")
             
     # adds items based on their type
     elif message.content.startswith(f"{prefix}add"):
@@ -323,7 +321,7 @@ async def on_message(message):
                 
                 await message.channel.send(f"{variable} set to {value} successfully.")
             else:
-                await message.channel.send(f"Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, PREFIX, SLEEP_TIME, COUNTER") 
+                await message.channel.send(f"Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, PREFIX, SLEEP_TIME, SEARCH_LIMIT", "NSFW_ALLOWED") 
         except:
             await message.channel.send(f"Error. Correct Syntax: `{prefix}set VARIABLE VALUE`")
 
