@@ -13,7 +13,7 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("SECRET")
 USER_AGENT = "Pain au Chocolat (by u/Herr_Sakib)"
 
-reddit: Optional[asyncpraw.Reddit] = None
+reddit = None
 
 async def authenticate() -> bool:
     global reddit
@@ -69,7 +69,7 @@ class Fetch:
         else:
             self.nsfw_allowed = False
         
-    async def get_submission(self, subreddit_name: str) -> Union[Submission, str]:
+    async def get_submission(self, subreddit_name):
         # getting the subreddit
         subreddit = await self.reddit.subreddit(subreddit_name)
         # fetches the actual subreddit data
