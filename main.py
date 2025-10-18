@@ -3,6 +3,10 @@ import discord, dotenv
 from discord.ext import commands
 import pain_au_chocolat
 
+# for running the bot as a web
+from keep_alive import keep_alive
+keep_alive()
+
 # loading the universal .env file
 dotenv.load_dotenv(".env")
 
@@ -15,8 +19,7 @@ intents.members = True
 intents.guilds = True
 
 # getting the universal data from the .env files
-BOT_TOKEN = "MTQyNTcxMTA2OTI2NzIzNDkxMg.GFi-Tg.Iwa15PFrCdpSpyKnvTlEAZJonkZCiu7tQSy_eY"
-# BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_URL = os.getenv("REPO_URL")
 
 # getting the server specific data from their .env files
@@ -75,7 +78,7 @@ async def on_message(message):
         
     # processing the commands
     await bot.process_commands(message)
-    
+
 
 @bot.event
 # called when a member of the server changes their activity
