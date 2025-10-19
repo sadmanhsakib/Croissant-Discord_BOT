@@ -1,24 +1,18 @@
 import os, json, random
 import dotenv, discord
-import pain_au_chocolat
+import pain_au_chocolat, config
 from discord.ext import commands
 
-# loading the .env file
-dotenv.load_dotenv(".env")
-
 # loading the dictionary into json format
-gif_dict = json.loads(os.getenv("GIF"))
-img_dict = json.loads(os.getenv("IMG"))
-vid_dict = json.loads(os.getenv("VID"))
+gif_dict = config.gif_dict
+img_dict = config.img_dict
+vid_dict = config.vid_dict
 
 class BotCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.prefix = self.bot.command_prefix
-        self.sleep_time = int(os.getenv("SLEEP_TIME"))
-        self.TYPES = os.getenv("TYPE").split(',')
 
-    @commands.command()
+    @commands.command(name="echo")
     async def echo(self, ctx, *, message: str=''):
         try:
             if message == '': 
@@ -26,23 +20,22 @@ class BotCommands(commands.Cog):
 
             await ctx.send(f"You said: {message}")
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{self.prefix}echo MESSAGE`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}echo MESSAGE`")
 
-    @commands.command()
+    @commands.command(name="hello")
     async def hello(self, ctx):
         await ctx.send(f"Good Day, {ctx.author.mention}. Hope you are having a fantastic day. ")
 
-    @commands.command()
+    @commands.command(name="ping")
     async def ping(self, ctx):
         await ctx.send(f"Ping: {round(self.bot.latency * 1000)} ms. ")
 
-    @commands.command()
+    @commands.command(name="status")
     async def status(self, ctx):
         await ctx.send(f"{self.bot.user} operational. ")
 
     @commands.command(name="help")
-    async def help_messages(self, ctx):
-
+    async def help_command(self, ctx):
         embed = discord.Embed(
             title="🤖 Bot Help Menu",
             description="Here are all available commands:",
@@ -52,10 +45,10 @@ class BotCommands(commands.Cog):
         # adding the general commands
         embed.add_field(
             name="\n📝 General Commands: ",
-            value=f"`{self.prefix}echo` - Echoes what you say.\n"
-            f"`{self.prefix}hello` - Greets the user.\n"
-            f"`{self.prefix}ping` - Returns the latency of the BOT in milliseconds.\n"
-            f"`{self.prefix}status` - Returns the status of the bot.\n",
+            value=f"`{config.prefix}echo` - Echoes what you say.\n"
+            f"`{config.prefix}hello` - Greets the user.\n"
+            f"`{config.prefix}status` - Returns the status of the bot.\n"
+            f"`{config.prefix}ping` - Returns the latency of the BOT in milliseconds.\n",
             inline=False
         )
 
@@ -63,14 +56,14 @@ class BotCommands(commands.Cog):
         embed.add_field(
             name="\n🧩 Complex Commands (Takes Arguments): ",
             value=f"`;ITEM_NAME` - Returns gif/image/video of the given name if the item was added.\n"
-            f"`{self.prefix}del number_of_messages_to_delete` - Deletes the number of messages given.\n"
-            f"`{self.prefix}list ITEM_TYPE` - Returns the list of gif/image/video names.\n"
-            f"`{self.prefix}greet USERNAME NAME` - Greets the given username with a gif/image/video.\n"
-            f"`{self.prefix}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
-            f"`{self.prefix}add TYPE NAME LINK` - Adds gif/image/video for later use.\n"
-            f"`{self.prefix}rmv TYPE NAME` - Removes gif/image/video of the given name from the storage.\n"
-            f"`{self.prefix}set VARIABLE VALUE` - Sets the value of the BOT config variable to the given value.(Must be used with caution.)\n"
-            f"`{self.prefix}random-line quran/sunnah/quote` - Returns a random line from the given file.",
+            f"`{config.prefix}del number_of_messages_to_delete` - Deletes the number of messages given.\n"
+            f"`{config.prefix}list ITEM_TYPE` - Returns the list of gif/image/video names.\n"
+            f"`{config.prefix}greet USERNAME NAME` - Greets the given username with a gif/image/video.\n"
+            f"`{config.prefix}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
+            f"`{config.prefix}add TYPE NAME LINK` - Adds gif/image/video for later use.\n"
+            f"`{config.prefix}rmv TYPE NAME` - Removes gif/image/video of the given name from the storage.\n"
+            f"`{config.prefix}set VARIABLE VALUE` - Sets the value of the BOT config variable to the given value.(Must be used with caution.)\n"
+            f"`{config.prefix}random-line quran/sunnah/quote` - Returns a random line from the given file.",
             inline=False
         )
 
@@ -84,11 +77,10 @@ class BotCommands(commands.Cog):
 
             # extracting the data from the message
             amount = int(message)
-
             # +1 to remove the command itself
             await ctx.channel.purge(limit=amount+1)
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{self.prefix}del number_of_messages_to_delete`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}del number_of_messages_to_delete`")
 
     @commands.command(name="list")
     async def list_item(self, ctx, *, message: str = ""):
@@ -99,7 +91,7 @@ class BotCommands(commands.Cog):
             item_type = message.upper()
 
             # proceeding if the given type is valid
-            if item_type in self.TYPES:
+            if item_type in config.TYPES:
                 # getting the correct dictionary
                 dictionary = get_dict(item_type)
                 # getting the keys from dictionary and converting it to a list
@@ -113,9 +105,9 @@ class BotCommands(commands.Cog):
             else:
                 await ctx.send(f"{item_type} not found.")
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{self.prefix}list ITEM_NAME`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}list ITEM_NAME`")
 
-    @commands.command()
+    @commands.command(name="greet")
     async def greet(self, ctx, *, message: str = ""):
         try:
             if message == '':
@@ -129,21 +121,21 @@ class BotCommands(commands.Cog):
             # sending the correct link based on their type
             if item_name in gif_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
-                await ctx.send(gif_dict[item_name], delete_after=self.sleep_time)
+                await ctx.send(gif_dict[item_name], delete_after=config.sleep_time)
             elif item_name in img_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
-                await ctx.send(img_dict[item_name], delete_after=self.sleep_time)
+                await ctx.send(img_dict[item_name], delete_after=config.sleep_time)
             elif item_name in vid_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
-                await ctx.send(vid_dict[item_name], delete_after=self.sleep_time)
+                await ctx.send(vid_dict[item_name], delete_after=config.sleep_time)
             # if the item_name is not found
             else:
                 await ctx.send(f"There is no '{item_name}' in storage. ")
                 await ctx.send("Use `-list ITEM_TYPE` to get the list of names.")
         except:
-            await ctx.send(f"Invalid. Correct Syntax: `{self.prefix}greet USERNAME NAME`")
+            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}greet USERNAME NAME`")
 
-    @commands.command()
+    @commands.command(name="reddit")
     async def reddit(self, ctx, *, message: str = ""):
         try:
             if message == '':
@@ -170,14 +162,14 @@ class BotCommands(commands.Cog):
             # removes the meme after sleep_time if the url is NSFW
             if submission.is_nsfw:
                 await ctx.send(f"{submission.title} \nBy: {submission.author}")
-                await ctx.send(submission.url, delete_after=self.sleep_time)
+                await ctx.send(submission.url, delete_after=config.sleep_time)
             else:
                 await ctx.send(f"{submission.title} \nBy: {submission.author}")
                 await ctx.send(submission.url)
         except:
-            await ctx.send(f"Invalid. Correct Syntax: `{self.prefix}reddit SUBREDDIT_NAME`")
+            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}reddit SUBREDDIT_NAME`")
 
-    @commands.command()
+    @commands.command(name="add")
     async def add(self, ctx, *, message: str = ""):
         try:
             if message == "":
@@ -190,7 +182,7 @@ class BotCommands(commands.Cog):
             item_name = parts[1]
             link = parts[2]
 
-            if item_type in self.TYPES:
+            if item_type in config.TYPES:
                 # getting the correct dictionary
                 dictionary = get_dict(item_type)
                 # adding the items to the dictionary
@@ -207,14 +199,14 @@ class BotCommands(commands.Cog):
                 )
             else:
                 await ctx.send(
-                    f"Type not found. Available types are: {self.TYPES}"
+                    f"Type not found. Available types are: {config.TYPES}"
                 )
         except Exception:
             await ctx.send(
-                f"Error. Correct Syntax: `{self.prefix}add TYPE NAME LINK`"
+                f"Error. Correct Syntax: `{config.prefix}add TYPE NAME LINK`"
             )
 
-    @commands.command()
+    @commands.command(name="rmv")
     async def rmv(self, ctx, *, message: str = ""):
         try:
             if message == "":
@@ -231,7 +223,7 @@ class BotCommands(commands.Cog):
             keys = list(dictionary.keys())
 
             # checking if the item actually exists
-            if item_type in self.TYPES and item_name in keys:
+            if item_type in config.TYPES and item_name in keys:
                 # removing the item from the dictionary
                 dictionary.pop(item_name)
 
@@ -243,14 +235,14 @@ class BotCommands(commands.Cog):
 
                 await ctx.send(f"{item_type}: {item_name} removed successfully.")
             else:
-                if item_type not in self.TYPES:
-                    await ctx.send(f"Type not found. Available types are: {self.TYPES}")
+                if item_type not in config.TYPES:
+                    await ctx.send(f"Type not found. Available types are: {config.TYPES}")
                 else:
                     await ctx.send(f"{item_name} not found. Available names are: {keys}")
         except:
-            await ctx.send(f"Error. Correct Syntax: `{self.prefix}rmv TYPE NAME`")
+            await ctx.send(f"Error. Correct Syntax: `{config.prefix}rmv TYPE NAME`")
 
-    @commands.command()
+    @commands.command(name="set")
     async def set(self, ctx, *, message: str = ""):
         try:
             if message == "":
@@ -266,24 +258,27 @@ class BotCommands(commands.Cog):
             # checking for each case which variable to update
             match variable:
                 case "PRESENCE_UPDATE_CHANNEL_ID":
+                    config.presence_update_channel_id = int(value)
                     shouldUpdate = True
                 case "PREFIX":
-                    self.prefix = value
+                    config.prefix = value
                     shouldUpdate = True
                 case "SLEEP_TIME":
-                    self.sleep_time = int(value)
+                    config.sleep_time = int(value)
                     shouldUpdate = True
                 case "SEARCH_LIMIT":
+                    config.search_limit = int(value)
                     shouldUpdate = True
                 case "NSFW_ALLOWED":
                     # parsing the user input
                     if value.lower() == "true" :
-                        value = '1'
+                        value = "True"
                     elif value.lower() == "false":
-                        value = '0'
+                        value = "False"
                     else:
                         ValueError
                     shouldUpdate = True
+                    config.nsfw_allowed = value
 
             if shouldUpdate:
                 # updating the variable in the .env file
@@ -293,9 +288,9 @@ class BotCommands(commands.Cog):
             else:
                 await ctx.send("Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, PREFIX, SLEEP_TIME, SEARCH_LIMIT, NSFW_ALLOWED") 
         except:
-            await ctx.send(f"Error. Correct Syntax: `{self.prefix}set VARIABLE VALUE`")
+            await ctx.send(f"Error. Correct Syntax: `{config.prefix}set VARIABLE VALUE`")
 
-    @commands.command()
+    @commands.command(name="random-line")
     async def random_line(self, ctx, *, message: str = ""):
         try:
             if message == "":
@@ -318,26 +313,26 @@ class BotCommands(commands.Cog):
             else:
                 await ctx.send(f"{item_name} not found. Available files are: {QUOTES}")
         except:
-            await ctx.send(f"Invalid. Correct Syntax: `{self.prefix}random-line quran/sunnah/quote`")
+            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}random-line quran/sunnah/quote`")
 
     async def send_item(self, message):
         try:
             item_name = message.content.replace(';', '')
 
-                # if the input is null, then create an Error
+            # if the input is null, then create an Error
             if item_name in gif_dict.keys():
                 # sending the correct gif
-                await message.channel.send(gif_dict[item_name], delete_after=self.sleep_time)
+                await message.channel.send(gif_dict[item_name], delete_after=config.sleep_time)
             elif item_name in img_dict.keys():
                 # sending the correct image
-                await message.channel.send(img_dict[item_name], delete_after=self.sleep_time)
+                await message.channel.send(img_dict[item_name], delete_after=config.sleep_time)
             elif item_name in vid_dict.keys():
-                    # sending the correct video
-                    await message.channel.send(vid_dict[item_name], delete_after=self.sleep_time)
+                # sending the correct video
+                await message.channel.send(vid_dict[item_name], delete_after=config.sleep_time)
             else:
                 await message.channel.send(f"There is no '{item_name}' in storage. ")
                 await message.channel.send(
-                    f"Use `{self.prefix}list ITEM_TYPE` to get the list of names."
+                    f"Use `{config.prefix}list ITEM_TYPE` to get the list of names."
                 )
         except:
             await message.channel.send(f"Invalid prompt! Correct syntax: `;ITEM_NAME`")

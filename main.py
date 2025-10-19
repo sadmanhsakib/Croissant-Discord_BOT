@@ -1,14 +1,10 @@
-import os
-import discord, dotenv
+import discord
 from discord.ext import commands
-import pain_au_chocolat
+import config
 
 # for running the bot as a web
 from keep_alive import keep_alive
 keep_alive()
-
-# loading the universal .env file
-dotenv.load_dotenv(".env")
 
 # giving the permissions
 intents = discord.Intents.default()
@@ -18,14 +14,15 @@ intents.messages = True
 intents.members = True
 intents.guilds = True
 
-# getting the universal data from the .env files
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-REPO_URL = os.getenv("REPO_URL")
+# getting the data from the config.py
+BOT_TOKEN = config.BOT_TOKEN
+REPO_URL = config.REPO_URL
+DATABASE_URL = config.DATABASE_URL
 
-# getting the server specific data from their .env files
-prefix = os.getenv("PREFIX")
+def get_prefix(bot, message):
+    return config.prefix
 
-bot = commands.Bot(command_prefix=prefix, intents=intents, help_command=None)
+bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 
 TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
 
@@ -36,7 +33,7 @@ async def on_ready():
     await pain_au_chocolat.authenticate()
 
     # loading the command script
-    await bot.load_extension("commands")
+    await bot.load_extension("bot_commands")
 
     # prints a message in console when ready
     print(f"✅Logged in as: {bot.user}")
@@ -72,7 +69,7 @@ async def on_message(message):
         await message.add_reaction("💢")
     # replying to item requests
     elif message.content.startswith(';'):
-        from commands import BotCommands
+        from bot_commands import BotCommands
         cog = BotCommands(bot)
         await cog.send_item(message)
         
@@ -84,9 +81,7 @@ async def on_message(message):
 # called when a member of the server changes their activity
 # before and after represents the member that has changed presence;
 async def on_presence_update(before, after):
-    # getting the channel id from the .env file
-    dotenv.load_dotenv(".env", override=True)
-    presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
+    presence_update_channel_id = config.presence_update_channel_id
     channel = bot.get_channel(presence_update_channel_id)
 
     # prevents replying to bot's presence update

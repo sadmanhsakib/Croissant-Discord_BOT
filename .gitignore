@@ -10,6 +10,7 @@ __pycache__/
 .Python
 .env
 .venv
+database.py
 test.py
 build/
 develop-eggs/
