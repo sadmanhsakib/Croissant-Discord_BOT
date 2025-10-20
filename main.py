@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import config
+import pain_au_chocolat
 
 # for running the bot as a web
 from keep_alive import keep_alive
@@ -13,11 +14,6 @@ intents.presences = True
 intents.messages = True
 intents.members = True
 intents.guilds = True
-
-# getting the data from the config.py
-BOT_TOKEN = config.BOT_TOKEN
-REPO_URL = config.REPO_URL
-DATABASE_URL = config.DATABASE_URL
 
 def get_prefix(bot, message):
     return config.prefix
@@ -47,14 +43,14 @@ async def on_guild_join(guild):
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
         await channel.send("Thank you for adding Croissant!")
-        await channel.send(f"Type: `{prefix}help` to get the command list.")
+        await channel.send(f"Type: `{config.prefix}help` to get the command list.")
         await channel.send("It's recommended for to try all the commands at least for once. ")
-        await channel.send(f"You can learn more about the BOT from here: {REPO_URL}")
+        await channel.send(f"You can learn more about the BOT from here: {config.REPO_URL}")
 
         # instructing the users on how to set up the channel
         await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
         await channel.send(
-            f"If you want to use this feature, use the '{prefix}set<space>PRESENCE_UPDATE_CHANNEL_ID' command. "
+            f"If you want to use this feature, use the '{config.prefix}set<space>PRESENCE_UPDATE_CHANNEL_ID' command. "
         )
         await channel.send("If you don't want to use this feature, you can ignore it. ")
 
@@ -100,4 +96,4 @@ async def on_presence_update(before, after):
 
 
 # starts the bot
-bot.run(BOT_TOKEN)
+bot.run(config.BOT_TOKEN)

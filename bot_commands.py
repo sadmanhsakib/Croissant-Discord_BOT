@@ -3,10 +3,6 @@ import dotenv, discord
 import pain_au_chocolat, config
 from discord.ext import commands
 
-# loading the dictionary into json format
-gif_dict = config.gif_dict
-img_dict = config.img_dict
-vid_dict = config.vid_dict
 
 class BotCommands(commands.Cog):
     def __init__(self, bot):
@@ -119,15 +115,21 @@ class BotCommands(commands.Cog):
             item_name = parts[1]
 
             # sending the correct link based on their type
-            if item_name in gif_dict.keys():
+            if item_name in config.gif_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
-                await ctx.send(gif_dict[item_name], delete_after=config.sleep_time)
-            elif item_name in img_dict.keys():
+                await ctx.send(
+                    config.gif_dict[item_name], delete_after=config.sleep_time
+                    )
+            elif item_name in config.img_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
-                await ctx.send(img_dict[item_name], delete_after=config.sleep_time)
-            elif item_name in vid_dict.keys():
+                await ctx.send(
+                    config.img_dict[item_name], delete_after=config.sleep_time
+                    )
+            elif item_name in config.vid_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
-                await ctx.send(vid_dict[item_name], delete_after=config.sleep_time)
+                await ctx.send(
+                    config.vid_dict[item_name], delete_after=config.sleep_time
+                    )
             # if the item_name is not found
             else:
                 await ctx.send(f"There is no '{item_name}' in storage. ")
@@ -320,15 +322,21 @@ class BotCommands(commands.Cog):
             item_name = message.content.replace(';', '')
 
             # if the input is null, then create an Error
-            if item_name in gif_dict.keys():
+            if item_name in config.gif_dict.keys():
                 # sending the correct gif
-                await message.channel.send(gif_dict[item_name], delete_after=config.sleep_time)
-            elif item_name in img_dict.keys():
+                await message.channel.send(
+                    config.gif_dict[item_name], delete_after=config.sleep_time
+                )
+            elif item_name in config.img_dict.keys():
                 # sending the correct image
-                await message.channel.send(img_dict[item_name], delete_after=config.sleep_time)
-            elif item_name in vid_dict.keys():
+                await message.channel.send(
+                    config.img_dict[item_name], delete_after=config.sleep_time
+                    )
+            elif item_name in config.vid_dict.keys():
                 # sending the correct video
-                await message.channel.send(vid_dict[item_name], delete_after=config.sleep_time)
+                await message.channel.send(
+                    config.vid_dict[item_name], delete_after=config.sleep_time
+                )
             else:
                 await message.channel.send(f"There is no '{item_name}' in storage. ")
                 await message.channel.send(
@@ -342,11 +350,11 @@ def get_dict(item_type):
     # finding the right type of dictionary
     match item_type:
         case "GIF":
-            dictionary = gif_dict
+            dictionary = config.gif_dict
         case "IMG":
-            dictionary = img_dict
+            dictionary = config.img_dict
         case "VID":
-            dictionary = vid_dict
+            dictionary = config.vid_dict
     return dictionary       
 
 async def setup(bot):

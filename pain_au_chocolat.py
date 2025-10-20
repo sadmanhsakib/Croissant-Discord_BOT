@@ -2,32 +2,25 @@ import random
 import asyncpraw, asyncprawcore
 import config
 
-# getting the data from the config.py
-USERNAME = config.USERNAME
-PASSWORD = config.PASSWORD
-CLIENT_ID = config.CLIENT_ID
-CLIENT_SECRET = config.CLIENT_SECRET
-USER_AGENT = "Pain au Chocolat (by u/Herr_Sakib)"
-
 reddit = None
 
 async def authenticate():
     global reddit
-    
+
     # if already authenticated
     if reddit is not None:
         return True
-    
+
     try:
         # authenticating with the api with the credentials
         reddit = asyncpraw.Reddit(
-            client_id = CLIENT_ID,
-            client_secret = CLIENT_SECRET,
-            username = USERNAME,
-            password = PASSWORD,
-            user_agent = USER_AGENT
+            client_id=config.CLIENT_ID,
+            client_secret=config.CLIENT_SECRET,
+            username=config.USERNAME,
+            password=config.PASSWORD,
+            user_agent="Pain au Chocolat (by u/Herr_Sakib)",
         )
-        
+
         # verify authentication
         user = await reddit.user.me()
         print("✅Logged in as: ", user.name)
@@ -44,7 +37,7 @@ class Submission:
         self.title = submission.title
         self.author = str(submission.author) if submission.author else "[deleted]"
         self.is_nsfw = submission.over_18
-        
+
 
 # this class fetches data from reddit and returns to Submission
 class Fetch:
