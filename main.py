@@ -15,6 +15,7 @@ intents.messages = True
 intents.members = True
 intents.guilds = True
 
+
 def get_prefix(bot, message):
     return config.prefix
 
@@ -63,11 +64,27 @@ async def on_message(message):
     # reacting to hate messages
     elif message.content.lower().__contains__("clanker"):
         await message.add_reaction("💢")
+    # reacting to bot mentions
+    elif bot.user.mentioned_in(message):
+        await message.add_reaction("✅")
     # replying to item requests
     elif message.content.startswith(';'):
+        # verifying if the message is a valid item request
+        parts = message.content.split(' ')
+        
+        try:
+            if parts[0][1] == ' ':
+                return
+            else:       
+                item_name = parts[0][1:]
+        except IndexError:
+            return
+        
+        # creating a cog object to call the send_item function
         from bot_commands import BotCommands
         cog = BotCommands(bot)
-        await cog.send_item(message)
+    
+        await cog.send_item(item_name, message.channel)
         
     # processing the commands
     await bot.process_commands(message)

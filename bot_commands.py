@@ -317,33 +317,33 @@ class BotCommands(commands.Cog):
         except:
             await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}random-line quran/sunnah/quote`")
 
-    async def send_item(self, message):
+    async def send_item(self, item_name, message_channel):
         try:
-            item_name = message.content.replace(';', '')
-
             # if the input is null, then create an Error
             if item_name in config.gif_dict.keys():
                 # sending the correct gif
-                await message.channel.send(
+                await message_channel.send(
                     config.gif_dict[item_name], delete_after=config.sleep_time
                 )
             elif item_name in config.img_dict.keys():
                 # sending the correct image
-                await message.channel.send(
+                await message_channel.send(
                     config.img_dict[item_name], delete_after=config.sleep_time
-                    )
+                )
             elif item_name in config.vid_dict.keys():
                 # sending the correct video
-                await message.channel.send(
+                await message_channel.send(
                     config.vid_dict[item_name], delete_after=config.sleep_time
                 )
             else:
-                await message.channel.send(f"There is no '{item_name}' in storage. ")
-                await message.channel.send(
+                await message_channel.send(f"There is no '{item_name}' in storage. ")
+                await message_channel.send(
                     f"Use `{config.prefix}list ITEM_TYPE` to get the list of names."
                 )
         except:
-            await message.channel.send(f"Invalid prompt! Correct syntax: `;ITEM_NAME`")
+            await message_channel.send(
+                f"Invalid prompt! Correct syntax: `;ITEM_NAME`"
+            )
 
 
 def get_dict(item_type):
