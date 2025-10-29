@@ -21,6 +21,6 @@ else:
     nsfw_allowed = False
 delete_after = int(os.getenv("DELETE_AFTER"))
 presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
-gif_dict = json.loads(os.getenv("GIF"))
-img_dict = json.loads(os.getenv("IMG"))
-vid_dict = json.loads(os.getenv("VID"))
+gif_dict = {}
+img_dict = {}
+vid_dict = {}
