@@ -118,17 +118,17 @@ class BotCommands(commands.Cog):
             if item_name in config.gif_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
                 await ctx.send(
-                    config.gif_dict[item_name], delete_after=config.sleep_time
+                    config.gif_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
                     )
             elif item_name in config.img_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
                 await ctx.send(
-                    config.img_dict[item_name], delete_after=config.sleep_time
+                    config.img_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
                     )
             elif item_name in config.vid_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
                 await ctx.send(
-                    config.vid_dict[item_name], delete_after=config.sleep_time
+                    config.vid_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
                     )
             # if the item_name is not found
             else:
@@ -323,17 +323,17 @@ class BotCommands(commands.Cog):
             if item_name in config.gif_dict.keys():
                 # sending the correct gif
                 await message_channel.send(
-                    config.gif_dict[item_name], delete_after=config.sleep_time
+                    config.gif_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
                 )
             elif item_name in config.img_dict.keys():
                 # sending the correct image
                 await message_channel.send(
-                    config.img_dict[item_name], delete_after=config.sleep_time
+                    config.img_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
                 )
             elif item_name in config.vid_dict.keys():
                 # sending the correct video
                 await message_channel.send(
-                    config.vid_dict[item_name], delete_after=config.sleep_time
+                    config.vid_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
                 )
             else:
                 await message_channel.send(f"There is no '{item_name}' in storage. ")
