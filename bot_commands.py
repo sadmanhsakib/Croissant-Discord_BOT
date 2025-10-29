@@ -118,17 +118,17 @@ class BotCommands(commands.Cog):
             if item_name in config.gif_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
                 await ctx.send(
-                    config.gif_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
+                    config.gif_dict[item_name], delete_after=config.delete_after if config.delete_after != 0 else None
                     )
             elif item_name in config.img_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
                 await ctx.send(
-                    config.img_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
+                    config.img_dict[item_name], delete_after=config.delete_after if config.delete_after != 0 else None
                     )
             elif item_name in config.vid_dict.keys():
                 await ctx.send(f"Hello, {user_name}")
                 await ctx.send(
-                    config.vid_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
+                    config.vid_dict[item_name], delete_after=config.delete_after if config.delete_after != 0 else None
                     )
             # if the item_name is not found
             else:
@@ -161,10 +161,10 @@ class BotCommands(commands.Cog):
                 await ctx.send(submission)
                 return
 
-            # removes the meme after sleep_time if the url is NSFW
+            # removes the meme after delete_after if the url is NSFW
             if submission.is_nsfw:
                 await ctx.send(f"{submission.title} \nBy: {submission.author}")
-                await ctx.send(submission.url, delete_after=config.sleep_time)
+                await ctx.send(submission.url, delete_after=config.delete_after)
             else:
                 await ctx.send(f"{submission.title} \nBy: {submission.author}")
                 await ctx.send(submission.url)
@@ -265,8 +265,8 @@ class BotCommands(commands.Cog):
                 case "PREFIX":
                     config.prefix = value
                     shouldUpdate = True
-                case "SLEEP_TIME":
-                    config.sleep_time = int(value)
+                case "DELETE_AFTER":
+                    config.delete_after = int(value)
                     shouldUpdate = True
                 case "SEARCH_LIMIT":
                     config.search_limit = int(value)
@@ -288,7 +288,7 @@ class BotCommands(commands.Cog):
 
                 await ctx.send(f"{variable} set to {value} successfully.")
             else:
-                await ctx.send("Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, PREFIX, SLEEP_TIME, SEARCH_LIMIT, NSFW_ALLOWED") 
+                await ctx.send("Variable not found. Available variables are: PRESENCE_UPDATE_CHANNEL_ID, PREFIX, delete_after, SEARCH_LIMIT, NSFW_ALLOWED") 
         except:
             await ctx.send(f"Error. Correct Syntax: `{config.prefix}set VARIABLE VALUE`")
 
@@ -323,17 +323,17 @@ class BotCommands(commands.Cog):
             if item_name in config.gif_dict.keys():
                 # sending the correct gif
                 await message_channel.send(
-                    config.gif_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
+                    config.gif_dict[item_name], delete_after=config.delete_after if config.delete_after != 0 else None
                 )
             elif item_name in config.img_dict.keys():
                 # sending the correct image
                 await message_channel.send(
-                    config.img_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
+                    config.img_dict[item_name], delete_after=config.delete_after if config.delete_after != 0 else None
                 )
             elif item_name in config.vid_dict.keys():
                 # sending the correct video
                 await message_channel.send(
-                    config.vid_dict[item_name], delete_after=config.sleep_time if config.sleep_time != 0 else None
+                    config.vid_dict[item_name], delete_after=config.delete_after if config.delete_after != 0 else None
                 )
             else:
                 await message_channel.send(f"There is no '{item_name}' in storage. ")

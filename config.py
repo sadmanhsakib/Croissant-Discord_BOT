@@ -19,7 +19,7 @@ if nsfw_allowed.lower() == "true":
     nsfw_allowed = True
 else:
     nsfw_allowed = False
-sleep_time = int(os.getenv("SLEEP_TIME"))
+delete_after = int(os.getenv("DELETE_AFTER"))
 presence_update_channel_id = int(os.getenv("PRESENCE_UPDATE_CHANNEL_ID"))
 gif_dict = json.loads(os.getenv("GIF"))
 img_dict = json.loads(os.getenv("IMG"))
