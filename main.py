@@ -76,14 +76,13 @@ async def on_message(message):
                         return
                     else:       
                         item_name = part[1:]
+                        # creating a cog object to call the send_item function
+                        from bot_commands import BotCommands
+                        cog = BotCommands(bot)
+                    
+                        await cog.send_item(item_name, message.channel)      
                 except IndexError:
                     return
-        
-        # creating a cog object to call the send_item function
-        from bot_commands import BotCommands
-        cog = BotCommands(bot)
-    
-        await cog.send_item(item_name, message.channel)
         
     # processing the commands
     await bot.process_commands(message)
