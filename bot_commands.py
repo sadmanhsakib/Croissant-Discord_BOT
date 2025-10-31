@@ -81,12 +81,15 @@ class BotCommands(commands.Cog):
     @commands.command(name="list")
     async def list_item(self, ctx):
         try:
-            await ctx.send(f"Available items in storage are: {config.storage_dict.keys()}")
+            # getting the keys from dictionary and converting it to a list
+            item_names = list(config.storage_dict.keys())
+
+            await ctx.send(f"```Available items in storage are: \n{item_names}```")
         except:
             await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}list`")
 
     @commands.command(name="greet")
-    async def greet(self, ctx, *, message: str = ''):
+    async def greet(self, ctx, *, message: str = ""):
         try:
             if message == '':
                 raise Exception
@@ -103,8 +106,8 @@ class BotCommands(commands.Cog):
                 item_names.append(part)
 
             # sending the messages
-            ctx.send(f"Hello {user_name}")
-            self.send_item(item_names, ctx)
+            await ctx.send(f"Hello {user_name}")
+            await self.send_item(item_names, ctx)
         except:
             await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}greet USERNAME ITEM_NAME(for multiple items, separate each with space)`")
 
@@ -158,7 +161,7 @@ class BotCommands(commands.Cog):
             # dumping the whole dict in a string for saving
             updated = json.dumps(config.storage_dict, ensure_ascii=False)
             # updating the database
-            await db.set_variable("STORAGE_DICT", updated)
+            await db.set_variable("STORAGE", updated)
 
             await ctx.send(f"{item_name} added successfully.")
 

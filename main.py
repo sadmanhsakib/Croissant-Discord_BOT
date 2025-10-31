@@ -3,9 +3,6 @@ import config, pain_au_chocolat
 from discord.ext import commands
 from database import db
 
-# for running the bot as a web
-from keep_alive import keep_alive
-keep_alive()
 
 # giving the permissions
 intents = discord.Intents.default()
@@ -15,6 +12,9 @@ intents.messages = True
 intents.members = True
 intents.guilds = True
 
+# for running the bot as a web
+from keep_alive import keep_alive
+keep_alive()
 
 def get_prefix(bot, message):
     return config.prefix
