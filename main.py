@@ -1,7 +1,7 @@
 import discord
+import config, pain_au_chocolat
 from discord.ext import commands
-import config
-import pain_au_chocolat
+from database import db
 
 # for running the bot as a web
 from keep_alive import keep_alive
@@ -21,26 +21,35 @@ def get_prefix(bot, message):
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 
-TIME_FORMAT = "%Y-%m-%d -> %H:%M:%S"
-
 @bot.event
 # when the bot starts
 async def on_ready():
+    # connecting to the database
+    await db.connect()
+
+    # loading all the data from the database
+    await config.load_data()
+    
     # authenticating the reddit api
     await pain_au_chocolat.authenticate()
-
+    
     # loading the command script
     await bot.load_extension("bot_commands")
-
+    
     # prints a message in console when ready
     print(f"✅Logged in as: {bot.user}")
 
 
 @bot.event
 async def on_guild_join(guild):
+    # setting the default values
+    await config.set_default(guild.id)
+    # loading the data from the database
+    await config.load_data(guild.id)
+    
     # getting the general channel of the server that the BOT just joined
     channel = discord.utils.get(guild.text_channels, name="general")
-
+    
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
         await channel.send("Thank you for adding Croissant!")
@@ -51,7 +60,7 @@ async def on_guild_join(guild):
         # instructing the users on how to set up the channel
         await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
         await channel.send(
-            f"If you want to use this feature, use the '{config.prefix}set<space>PRESENCE_UPDATE_CHANNEL_ID' command. "
+            f"If you want to use this feature, use the '{config.prefix}set<space>PRESENCE_UPDATE_CHANNEL_ID<space>channel_id' command. "
         )
         await channel.send("If you don't want to use this feature, you can ignore it. ")
 
@@ -66,25 +75,28 @@ async def on_message(message):
         await message.add_reaction("💢")
     # replying to item requests
     elif message.content.__contains__(';'):
+        item_names = []
         parts = message.content.split(' ')
-        
-        # looking for the item name
-        for part in parts:
+            
+        for part in parts: 
             if part[0] == ';':
                 try:
+                    # checking if the item name is an actual request
                     if part[1] == ' ':
                         return
-                    else:       
-                        item_name = part[1:]
-                except IndexError:
+                    else:
+                        # removing the ; from the item name
+                        item_names.append(part[1:])
+                except IndexError:  
                     return
         
-        # creating a cog object to call the send_item function
         from bot_commands import BotCommands
         cog = BotCommands(bot)
-    
-        await cog.send_item(item_name, message.channel)
         
+        if item_names:
+            # sending items if applicable
+            await cog.send_item(item_names, message.channel)
+
     # processing the commands
     await bot.process_commands(message)
 
