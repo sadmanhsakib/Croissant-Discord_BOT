@@ -45,7 +45,8 @@ class BotCommands(commands.Cog):
             f"`{config.prefix}hello` - Greets the user.\n"
             f"`{config.prefix}status` - Returns the status of the bot.\n"
             f"`{config.prefix}ping` - Returns the latency of the BOT in milliseconds.\n"
-            f"`{config.prefix}list` - Returns all the available item names from the storage.\n",
+            f"`{config.prefix}list` - Returns all the available item names from the storage.\n"
+            f"`{config.prefix}list nsfw` - Returns all the available NSFW item names from the storage.\n",
             inline=False
         )
 
@@ -86,12 +87,12 @@ class BotCommands(commands.Cog):
                 # getting the keys from dictionary and converting it to a list
                 item_names = list(config.storage_dict.keys())
                 await ctx.send(f"```Available items in storage are: \n{item_names}```")
-            elif message.lower().contains("nsfw"): 
+            elif message == "nsfw": 
                 # getting the keys from dictionary and converting it to a list
                 item_names = list(config.nsfw_storage_dict.keys())
                 await ctx.send(f"```Available items in nsfw storage are: \n{item_names}```")
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}list`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}list`\nFor NSFW contents, correct syntax: `{config.prefix}list nsfw`")
 
     @commands.command(name="greet")
     async def greet(self, ctx, *, message: str = ""):
@@ -201,7 +202,7 @@ class BotCommands(commands.Cog):
             item_name = message
             
             # checking if the item is in the dictionary
-            if item_name not in config.storage_dict.keys() or item_name not in config.nsfw_storage_dict.keys():
+            if item_name not in config.storage_dict.keys() and item_name not in config.nsfw_storage_dict.keys():
                 await ctx.send(f"There is no '{item_name}' in storage. ")
                 await ctx.send(f"Use `{config.prefix}list` to get the list of names.")
             else:
@@ -311,9 +312,9 @@ class BotCommands(commands.Cog):
                     # sending the correct link for each type
                     await message_channel.send(config.nsfw_storage_dict[item_name], delete_after = config.delete_after if config.delete_after != 0 else None)
                 else:
-                    message_channel.send("Invalid channel for NSFW content. Use the command in a NSFW channel. ")
+                    await message_channel.send("Invalid channel for NSFW content. Use the command in a NSFW channel. ")
             else:
-                await message_channel.send(f"There is no '{item_name}' in storage. Use `{config.prefix}list` to get the list of names.")
+                await message_channel.send(f"There is no '{item_name}' in storage. Use `{config.prefix}list` to get the item names.\nFor NSFW contents, use `{config.prefix}list nsfw`")
 
 async def setup(bot):
     await bot.add_cog(BotCommands(bot))

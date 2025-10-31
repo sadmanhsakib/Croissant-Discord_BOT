@@ -21,6 +21,7 @@ nsfw_storage_dict = None
 
 from database import db
 
+
 async def load_data():
     global prefix, search_limit, nsfw_allowed, delete_after, presence_update_channel_id, storage_dict, nsfw_storage_dict
 
