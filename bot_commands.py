@@ -57,6 +57,7 @@ class BotCommands(commands.Cog):
             f"`{config.prefix}greet USERNAME ITEM_NAMES(for multiple items, separate each with space)` - Greets the given username with a gif/image/video.\n"
             f"`{config.prefix}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
             f"`{config.prefix}add NAME LINK` - Adds gif/image/video for later use.\n"
+            f"`{config.prefix}add nsfw NAME LINK` - Adds nfsw gif/image/video for later use in a separate storage.\n"
             f"`{config.prefix}rmv NAME` - Removes gif/image/video of the given name from the storage.\n"
             f"`{config.prefix}set VARIABLE VALUE` - Sets the value of the BOT config prefixlue.(Must be used with caution.)\n"
             f"`{config.prefix}random-line quran/sunnah/quote` - Returns a random line from the given file.",
@@ -79,12 +80,16 @@ class BotCommands(commands.Cog):
             await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}del number_of_messages_to_delete`")
 
     @commands.command(name="list")
-    async def list_item(self, ctx):
+    async def list_item(self, ctx, *, message: str = ""):
         try:
-            # getting the keys from dictionary and converting it to a list
-            item_names = list(config.storage_dict.keys())
-
-            await ctx.send(f"```Available items in storage are: \n{item_names}```")
+            if message == '':
+                # getting the keys from dictionary and converting it to a list
+                item_names = list(config.storage_dict.keys())
+                await ctx.send(f"```Available items in storage are: \n{item_names}```")
+            else: 
+                # getting the keys from dictionary and converting it to a list
+                item_names = list(config.nsfw_storage_dict.keys())
+                await ctx.send(f"```Available items in nsfw storage are: \n{item_names}```")
         except:
             await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}list`")
 
@@ -153,17 +158,33 @@ class BotCommands(commands.Cog):
 
             # extracting the data for the message
             parts = message.split(' ')
-            item_name = parts[0]
-            item_url = parts[1]
 
-            # adding the item to the dictionary
-            config.storage_dict.update({item_name: item_url})
-            # dumping the whole dict in a string for saving
-            updated = json.dumps(config.storage_dict, ensure_ascii=False)
-            # updating the database
-            await db.set_variable("STORAGE", updated)
+            # for non nsfw items
+            if len(parts) == 2:
+                item_name = parts[0]
+                item_url = parts[1]
 
-            await ctx.send(f"{item_name} added successfully.")
+                # adding the item to the dictionary
+                config.storage_dict.update({item_name: item_url})
+                # dumping the whole dict in a string for saving
+                updated = json.dumps(config.storage_dict, ensure_ascii=False)
+                # updating the database
+                await db.set_variable("STORAGE", updated)
+
+                await ctx.send(f"{item_name} added successfully.")
+            else:
+                # for nsfw items
+                item_name = parts[1]
+                item_url = parts[2]
+
+                # adding the item to the dictionary
+                config.nsfw_storage_dict.update({item_name: item_url})
+                # dumping the whole dict in a string for saving
+                updated = json.dumps(config.nsfw_storage_dict, ensure_ascii=False)
+                # updating the database
+                await db.set_variable("NSFW_STORAGE", updated)
+
+                await ctx.send(f"{item_name} added successfully.")
 
         except Exception:
             await ctx.send(
@@ -181,16 +202,24 @@ class BotCommands(commands.Cog):
             item_name = parts[0]
 
             # checking if the item is in the dictionary
-            if item_name not in config.storage_dict.keys():
+            if item_name not in config.storage_dict.keys() or item_name not in config.nsfw_storage_dict.keys():
                 await ctx.send(f"There is no '{item_name}' in storage. ")
                 await ctx.send(f"Use `{config.prefix}list` to get the list of names.")
             else:
-                # removing the item from the dictionary
-                config.storage_dict.pop(item_name)
-                # dumping the whole dict in a string for saving
-                updated = json.dumps(config.storage_dict, ensure_ascii=False)
-                # updating the database
-                await db.set_variable("STORAGE_DICT", updated)
+                try:
+                    # removing the item from the dictionary
+                    config.storage_dict.pop(item_name)
+                    # dumping the whole dict in a string for saving
+                    updated = json.dumps(config.storage_dict, ensure_ascii=False)
+                    # updating the database
+                    await db.set_variable("STORAGE", updated)
+                # removing from nsfw dict on keyerror
+                except KeyError:
+                    config.nsfw_storage_dict.pop(item_name)
+                    # dumping the whole dict in a string for saving
+                    updated = json.dumps(config.nsfw_storage_dict, ensure_ascii=False)
+                    # updating the database
+                    await db.set_variable("NSFW_STORAGE", updated)
 
                 await ctx.send(f"{item_name} removed successfully.")
         except:
@@ -273,10 +302,17 @@ class BotCommands(commands.Cog):
             await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}random-line quran/sunnah/quote`")
 
     async def send_item(self, item_names, message_channel):
+        # looking for the correct link for each type
         for item_name in item_names:
-            # sending the correct link for each type
             if item_name in config.storage_dict.keys():
                 await message_channel.send(config.storage_dict[item_name], delete_after = config.delete_after if config.delete_after != 0 else None)
+            # checking for nsfw and permission
+            elif item_name in config.nsfw_storage_dict.keys():
+                if message_channel.nsfw:
+                    # sending the correct link for each type
+                    await message_channel.send(config.nsfw_storage_dict[item_name], delete_after = config.delete_after if config.delete_after != 0 else None)
+                else:
+                    message_channel.send("Invalid channel for NSFW content. Use the command in a NSFW channel. ")
             else:
                 await message_channel.send(f"There is no '{item_name}' in storage. Use `{config.prefix}list` to get the list of names.")
 

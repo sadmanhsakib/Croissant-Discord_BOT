@@ -17,16 +17,16 @@ nsfw_allowed = None
 delete_after = None
 presence_update_channel_id = None
 storage_dict = None
-
+nsfw_storage_dict = None
 
 from database import db
 
 async def load_data():
-    global prefix, search_limit, nsfw_allowed, delete_after, presence_update_channel_id, storage_dict
+    global prefix, search_limit, nsfw_allowed, delete_after, presence_update_channel_id, storage_dict, nsfw_storage_dict
 
     # getting the variable value for the database
     prefix = await db.get_variable("PREFIX")
-    
+
     search_limit = await db.get_variable("SEARCH_LIMIT")
     search_limit = int(search_limit)
 
@@ -35,11 +35,12 @@ async def load_data():
 
     delete_after = await db.get_variable("DELETE_AFTER")
     delete_after = int(delete_after)
-    
+
     presence_update_channel_id = await db.get_variable("PRESENCE_UPDATE_CHANNEL_ID")
     presence_update_channel_id = int(presence_update_channel_id)
-    
+
     storage_dict = json.loads(await db.get_variable("STORAGE"))
+    nsfw_storage_dict = json.loads(await db.get_variable("NSFW_STORAGE"))
 
 
 async def set_default():
