@@ -57,9 +57,9 @@ class BotCommands(commands.Cog):
             f"`{config.prefix}greet USERNAME ITEM_NAMES(for multiple items, separate each with space)` - Greets the given username with a gif/image/video.\n"
             f"`{config.prefix}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
             f"`{config.prefix}add NAME LINK` - Adds gif/image/video for later use.\n"
-            f"`{config.prefix}add nsfw NAME LINK` - Adds nfsw gif/image/video for later use in a separate storage.\n"
+            f"`{config.prefix}add nsfw NAME LINK` - Adds NSFW gif/image/video for later use in a separate storage.\n"
             f"`{config.prefix}rmv NAME` - Removes gif/image/video of the given name from the storage.\n"
-            f"`{config.prefix}set VARIABLE VALUE` - Sets the value of the BOT config prefixlue.(Must be used with caution.)\n"
+            f"`{config.prefix}set VARIABLE VALUE` - Sets the values of BOT config.(Must be used with caution.)\n"
             f"`{config.prefix}random-line quran/sunnah/quote` - Returns a random line from the given file.",
             inline=False
         )
@@ -86,7 +86,7 @@ class BotCommands(commands.Cog):
                 # getting the keys from dictionary and converting it to a list
                 item_names = list(config.storage_dict.keys())
                 await ctx.send(f"```Available items in storage are: \n{item_names}```")
-            else: 
+            elif message.lower().contains("nsfw"): 
                 # getting the keys from dictionary and converting it to a list
                 item_names = list(config.nsfw_storage_dict.keys())
                 await ctx.send(f"```Available items in nsfw storage are: \n{item_names}```")
@@ -112,7 +112,7 @@ class BotCommands(commands.Cog):
 
             # sending the messages
             await ctx.send(f"Hello {user_name}")
-            await self.send_item(item_names, ctx)
+            await self.send_item(item_names, ctx.channel)
         except:
             await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}greet USERNAME ITEM_NAME(for multiple items, separate each with space)`")
 
@@ -172,7 +172,7 @@ class BotCommands(commands.Cog):
                 await db.set_variable("STORAGE", updated)
 
                 await ctx.send(f"{item_name} added successfully.")
-            else:
+            elif parts[0].lower() == "nsfw":
                 # for nsfw items
                 item_name = parts[1]
                 item_url = parts[2]
@@ -185,10 +185,11 @@ class BotCommands(commands.Cog):
                 await db.set_variable("NSFW_STORAGE", updated)
 
                 await ctx.send(f"{item_name} added successfully.")
-
+            else:
+                raise Exception
         except Exception:
             await ctx.send(
-                f"Error. Correct Syntax: `{config.prefix}add NAME LINK`"
+                f"Error. Correct Syntax: `{config.prefix}add NAME LINK`\nFor nsfw content, Correct Syntax: `{config.prefix}add nsfw NAME LINK`"
             )
 
     @commands.command(name="rmv")
@@ -197,10 +198,8 @@ class BotCommands(commands.Cog):
             if message == '':
                 raise Exception
 
-            # extracting the data for the message
-            parts = message.split(' ')
-            item_name = parts[0]
-
+            item_name = message
+            
             # checking if the item is in the dictionary
             if item_name not in config.storage_dict.keys() or item_name not in config.nsfw_storage_dict.keys():
                 await ctx.send(f"There is no '{item_name}' in storage. ")
