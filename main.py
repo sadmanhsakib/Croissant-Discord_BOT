@@ -76,10 +76,11 @@ async def on_message(message):
     if message.content.lower().__contains__("clanker"):
         await message.add_reaction("💢")
     # replying to item requests
-    elif message.content.__contains__(';'):
+    if message.content.__contains__(';'):
         item_names = []
         parts = message.content.split(' ')
             
+        # for every word in the message
         for part in parts: 
             if part[0] == ';':
                 try:
