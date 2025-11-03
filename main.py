@@ -71,8 +71,9 @@ async def on_message(message):
     # prevents the bot from replying on its own messages
     if message.author == bot.user:
         return
+    
     # reacting to hate messages
-    elif message.content.lower().__contains__("clanker"):
+    if message.content.lower().__contains__("clanker"):
         await message.add_reaction("💢")
     # replying to item requests
     elif message.content.__contains__(';'):

@@ -91,6 +91,8 @@ class BotCommands(commands.Cog):
                 # getting the keys from dictionary and converting it to a list
                 item_names = list(config.nsfw_storage_dict.keys())
                 await ctx.send(f"```Available items in nsfw storage are: \n{item_names}```")
+            else:
+                raise Exception
         except:
             await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}list`\nFor NSFW contents, correct syntax: `{config.prefix}list nsfw`")
 
