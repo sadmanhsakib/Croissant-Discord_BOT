@@ -72,11 +72,23 @@ class BotCommands(commands.Cog):
         try:
             if message == '':
                 raise Exception
-
+            
             # extracting the data from the message
             amount = int(message)
             # +1 to remove the command itself
-            await ctx.channel.purge(limit=amount+1)
+            deleted_messages = await ctx.channel.purge(limit=amount+1)
+            await ctx.send(f"Deleted {len(deleted_messages)} messages.", delete_after=5)
+            deleted_messages.clear()
+        except ValueError:
+            if message == 'all':
+                # bulk, deletes the messages in a much more efficient way
+                deleted_messages = await ctx.channel.purge(limit=None, bulk=True)
+                await ctx.send(f"Deleted {len(deleted_messages)} messages.", delete_after=5)
+                
+                # clearing the deleted messages list as we don't need them
+                deleted_messages.clear()
+            else:
+                raise Exception
         except:
             await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}del number_of_messages_to_delete`")
 
