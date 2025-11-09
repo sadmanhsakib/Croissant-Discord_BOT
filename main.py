@@ -8,6 +8,7 @@ from keep_alive import keep_alive
 
 keep_alive()
 
+
 # giving the permissions
 intents = discord.Intents.default()
 intents.message_content = True
@@ -101,7 +102,7 @@ async def on_message(message):
         
         if item_names:
             # sending items if applicable
-            await cog.send_item(item_names, message)
+            await cog.send_item(item_names, message.channel)
 
     # processing the commands
     await bot.process_commands(message)

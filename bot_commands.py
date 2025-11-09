@@ -319,27 +319,28 @@ class BotCommands(commands.Cog):
             await ctx.send(f"Invalid. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}" +
                            "random-line quran/sunnah/quote`")
 
-    async def send_item(self, item_names, message):
+    async def send_item(self, item_names, message_channel):
         # looking for the correct link for each type
         for item_name in item_names:
-            if item_name in config.storage_dict_cache[message.guild.id].keys():
-                await message.channel.send(config.storage_dict_cache[message.guild.id][item_name], 
-                                           delete_after = config.delete_after_cache[message.guild.id] 
-                                           if config.delete_after_cache[message.guild.id] != 0 else None)
+            if item_name in config.storage_dict_cache[message_channel.guild.id].keys():
+                await message_channel.send(config.storage_dict_cache[message_channel.guild.id][item_name], 
+                                           delete_after = config.delete_after_cache[message_channel.guild.id] 
+                                           if config.delete_after_cache[message_channel.guild.id] != 0 else None)
             # checking for nsfw and permission
-            elif item_name in config.nsfw_storage_dict_cache[message.guild.id].keys():
-                if message.channel.nsfw:
+            elif item_name in config.nsfw_storage_dict_cache[message_channel.guild.id].keys():
+                
+                if message_channel.nsfw:
                     # sending the correct link for each type
-                    await message.channel.send(config.nsfw_storage_dict_cache[message.guild.id][item_name], 
-                                               delete_after = config.delete_after_cache[message.guild.id] 
-                                               if config.delete_after_cache[message.guild.id] != 0 else None)
+                    await message_channel.send(config.nsfw_storage_dict_cache[message_channel.guild.id][item_name], 
+                                               delete_after = config.delete_after_cache[message_channel.guild.id] 
+                                               if config.delete_after_cache[message_channel.guild.id] != 0 else None)
                 else:
-                    await message.channel.send("Invalid channel for NSFW content. "
+                    await message_channel.send("Invalid channel for NSFW content. "
                                                + "Use the command in a NSFW channel. ")
             else:
-                await message.channel.send(
-                    f"There is no '{item_name}' in storage. Use `{config.prefix_cache[message.guild.id]}list`" + 
-                    f" to get the item names.\nFor NSFW contents, use `{config.prefix_cache[message.guild.id]}list nsfw`"
+                await message_channel.send(
+                    f"There is no '{item_name}' in storage. Use `{config.prefix_cache[message_channel.guild.id]}list`" + 
+                    f" to get the item names.\nFor NSFW contents, use `{config.prefix_cache[message_channel.guild.id]}list nsfw`"
                 )
 
 async def setup(bot):
