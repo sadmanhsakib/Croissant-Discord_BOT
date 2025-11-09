@@ -3,7 +3,8 @@ import dotenv
 
 dotenv.load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = "MTQyNTcxMTA2OTI2NzIzNDkxMg.G1TdBq.OzUN-A1wCYgvoSQw2k96d9QOkndtaudBnxvwvo"
+# BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_URL = os.getenv("REPO_URL")
 DATABASE_URL = os.getenv("DATABASE_URL")
 USERNAME = os.getenv("REDDIT_USERNAME")
@@ -11,45 +12,54 @@ PASSWORD = os.getenv("REDDIT_PASSWORD")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("SECRET")
 
-prefix = None
-search_limit = None
-nsfw_allowed = None
-delete_after = None
-presence_update_channel_id = None
-storage_dict = None
-nsfw_storage_dict = None
+prefix_cache = None
+search_limit_cache = None
+nsfw_allowed_cache = None
+delete_after_cache = None
+notify_channel_id_cache = None
+storage_dict_cache = None
+nsfw_storage_dict_cache = None
 
 from database import db
 
 
-async def load_data():
-    global prefix, search_limit, nsfw_allowed, delete_after, presence_update_channel_id, storage_dict, nsfw_storage_dict
+async def load_all_data():
+    global prefix_cache, search_limit_cache, nsfw_allowed_cache, delete_after_cache, notify_channel_id_cache, storage_dict_cache, nsfw_storage_dict_cache
 
-    # getting the variable value for the database
-    prefix = await db.get_variable("PREFIX")
+    prefix_cache = await db.load_all_variables("PREFIX")
 
-    search_limit = await db.get_variable("SEARCH_LIMIT")
-    search_limit = int(search_limit)
+    search_limit_cache = await db.load_all_variables("SEARCH_LIMIT")
+    for key in search_limit_cache:
+        search_limit_cache[key] = int(search_limit_cache[key])
 
-    nsfw_allowed = await db.get_variable("NSFW_ALLOWED")
-    nsfw_allowed = True if nsfw_allowed.lower() == "true" else False
+    nsfw_allowed_cache = await db.load_all_variables("NSFW_ALLOWED")
+    for key in nsfw_allowed_cache:
+        nsfw_allowed_cache[key] = True if nsfw_allowed_cache[key].lower() == "true" else False
 
-    delete_after = await db.get_variable("DELETE_AFTER")
-    delete_after = int(delete_after)
+    delete_after_cache = await db.load_all_variables("DELETE_AFTER")
+    for key in delete_after_cache:
+        delete_after_cache[key] = int(delete_after_cache[key])
 
-    presence_update_channel_id = await db.get_variable("PRESENCE_UPDATE_CHANNEL_ID")
-    presence_update_channel_id = int(presence_update_channel_id)
+    notify_channel_id_cache = await db.load_all_variables("PRESENCE_UPDATE_CHANNEL_ID")
+    for key in notify_channel_id_cache:
+        notify_channel_id_cache[key] = int(notify_channel_id_cache[key])
 
-    storage_dict = json.loads(await db.get_variable("STORAGE"))
-    nsfw_storage_dict = json.loads(await db.get_variable("NSFW_STORAGE"))
+    storage_dict_cache = await db.load_all_variables("STORAGE")
+    for key in storage_dict_cache:
+        storage_dict_cache[key] = json.loads(storage_dict_cache[key])
+    
+    nsfw_storage_dict_cache = await db.load_all_variables("NSFW_STORAGE")
+    for key in nsfw_storage_dict_cache:
+        nsfw_storage_dict_cache[key] = json.loads(nsfw_storage_dict_cache[key])
 
-
-async def set_default():
-    await db.set_variable("PREFIX", "-")
-    await db.set_variable("SEARCH_LIMIT", "50")
-    await db.set_variable("NSFW_ALLOWED", "false")
-    await db.set_variable("DELETE_AFTER", "10")
-    await db.set_variable("PRESENCE_UPDATE_CHANNEL_ID", "0")
-    await db.set_variable("STORAGE", "{}")
+async def set_default(server_id: int):
+    # setting the default values (called when joined in a  new server)
+    await db.set_variable(server_id, "PREFIX", "-")
+    await db.set_variable(server_id, "SEARCH_LIMIT", "50")
+    await db.set_variable(server_id, "NSFW_ALLOWED", "false")
+    await db.set_variable(server_id, "DELETE_AFTER", "10")
+    await db.set_variable(server_id, "PRESENCE_UPDATE_CHANNEL_ID", "0")
+    await db.set_variable(server_id, "STORAGE", "{}")
+    await db.set_variable(server_id, "NSFW_STORAGE", "{}")
 
     print("✅Successfully set the default values for this server!")

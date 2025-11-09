@@ -49,7 +49,7 @@ class Fetch:
         
         self.reddit = reddit
 
-    async def get_submission(self, subreddit_name):
+    async def get_submission(self, subreddit_name, server_id: int):
         # getting the subreddit
         subreddit = await self.reddit.subreddit(subreddit_name)
         # fetches the actual subreddit data
@@ -61,13 +61,13 @@ class Fetch:
             return f"❌ Access to r/{subreddit_name} is restricted"
 
         # returning error message for permission error
-        if subreddit.over18 and not config.nsfw_allowed:
-            return f"🔞 NSFW content is disabled. To enable itm type: `{config.prefix}set nsfw_allowed true`"
+        if subreddit.over18 and not config.nsfw_allowed_cache[server_id]:
+            return f"🔞 NSFW content is disabled. To enable itm type: `{config.prefix_cache[server_id]}set nsfw_allowed true`"
 
         submission_list = []
         try:
             # getting a random post from the subreddit
-            async for submission in subreddit.new(limit=config.search_limit):
+            async for submission in subreddit.new(limit=config.search_limit_cache[server_id]):
                 # checking if the post is an image or gif and not stickied
                 # these extra parentheses creates a tuple, basically we are supplying a tuple as argument
                 if not submission.stickied and submission.url.endswith(('.jpg', '.jpeg', '.png', '.gif')):
@@ -78,7 +78,7 @@ class Fetch:
             return f"❌ Error fetching posts: {e}"
         
         if not submission_list:
-            return f"🖼️ No image/GIF posts found in r/{subreddit_name} (checked {config.search_limit} posts)."
+            return f"🖼️ No image/GIF posts found in r/{subreddit_name} (checked {config.search_limit_cache[server_id]} posts)."
         
         # returning a random submission from the list
         return random.choice(submission_list)

@@ -3,10 +3,7 @@ import config, pain_au_chocolat
 from discord.ext import commands
 from database import db
 
-# for running the bot as a web
-from keep_alive import keep_alive
 
-keep_alive()
 
 # giving the permissions
 intents = discord.Intents.default()
@@ -17,8 +14,10 @@ intents.members = True
 intents.guilds = True
 
 
-def get_prefix(bot, message):
-    return config.prefix
+async def get_prefix(bot, message):
+    # returning the prefix for this server
+    return config.prefix_cache[message.guild.id]
+
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 
@@ -27,10 +26,9 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None
 async def on_ready():
     # connecting to the database
     await db.connect()
-
-    # loading all the data from the database
-    await config.load_data()
-    
+    # loading the data from the database
+    await config.load_all_data()
+  
     # authenticating the reddit api
     await pain_au_chocolat.authenticate()
     
@@ -43,25 +41,27 @@ async def on_ready():
 
 @bot.event
 async def on_guild_join(guild):
+    config.prefix_cache.update({guild.id: "-"})
+
     # setting the default values
     await config.set_default(guild.id)
     # loading the data from the database
-    await config.load_data(guild.id)
-    
+    await config.load_all_data()
+
     # getting the general channel of the server that the BOT just joined
     channel = discord.utils.get(guild.text_channels, name="general")
-    
+
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
         await channel.send("Thank you for adding Croissant!")
-        await channel.send(f"Type: `{config.prefix}help` to get the command list.")
+        await channel.send(f"Type: `{config.prefix_cache[guild.id]}help` to get the command list.")
         await channel.send("It's recommended for to try all the commands at least for once. ")
         await channel.send(f"You can learn more about the BOT from here: {config.REPO_URL}")
 
         # instructing the users on how to set up the channel
         await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
         await channel.send(
-            f"If you want to use this feature, use the '{config.prefix}set<space>PRESENCE_UPDATE_CHANNEL_ID<space>channel_id' command. "
+            f"If you want to use this feature, use the '{config.prefix_cache[guild.id]}set<space>PRESENCE_UPDATE_CHANNEL_ID<space>channel_id' command. "
         )
         await channel.send("If you don't want to use this feature, you can ignore it. ")
 
@@ -98,7 +98,7 @@ async def on_message(message):
         
         if item_names:
             # sending items if applicable
-            await cog.send_item(item_names, message.channel)
+            await cog.send_item(item_names, message)
 
     # processing the commands
     await bot.process_commands(message)
@@ -108,7 +108,7 @@ async def on_message(message):
 # called when a member of the server changes their activity
 # before and after represents the member that has changed presence;
 async def on_presence_update(before, after):
-    presence_update_channel_id = config.presence_update_channel_id
+    presence_update_channel_id = config.notify_channel_id_cache[after.guild.id]
     channel = bot.get_channel(presence_update_channel_id)
 
     # prevents replying to bot's presence update

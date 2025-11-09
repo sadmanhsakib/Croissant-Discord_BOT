@@ -16,7 +16,7 @@ class BotCommands(commands.Cog):
 
             await ctx.send(f"You said: {message}")
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}echo MESSAGE`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}echo MESSAGE`")
 
     @commands.command(name="hello")
     async def hello(self, ctx):
@@ -41,12 +41,12 @@ class BotCommands(commands.Cog):
         # adding the general commands
         embed.add_field(
             name="\n📝 General Commands: ",
-            value=f"`{config.prefix}echo` - Echoes what you say.\n"
-            f"`{config.prefix}hello` - Greets the user.\n"
-            f"`{config.prefix}status` - Returns the status of the bot.\n"
-            f"`{config.prefix}ping` - Returns the latency of the BOT in milliseconds.\n"
-            f"`{config.prefix}list` - Returns all the available item names from the storage.\n"
-            f"`{config.prefix}list nsfw` - Returns all the available NSFW item names from the storage.\n",
+            value=f"`{config.prefix_cache[ctx.guild.id]}echo` - Echoes what you say.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}hello` - Greets the user.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}status` - Returns the status of the bot.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}ping` - Returns the latency of the BOT in milliseconds.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}list` - Returns all the available item names from the storage.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}list nsfw` - Returns all the available NSFW item names from the storage.\n",
             inline=False
         )
 
@@ -54,14 +54,14 @@ class BotCommands(commands.Cog):
         embed.add_field(
             name="\n🧩 Complex Commands (Takes Arguments): ",
             value=f"`;ITEM_NAME` - Returns gif/image/video of the given name if the item was added.\n"
-            f"`{config.prefix}del number_of_messages_to_delete` - Deletes the number of messages given.\n"
-            f"`{config.prefix}greet USERNAME ITEM_NAMES(for multiple items, separate each with space)` - Greets the given username with a gif/image/video.\n"
-            f"`{config.prefix}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
-            f"`{config.prefix}add NAME LINK` - Adds gif/image/video for later use.\n"
-            f"`{config.prefix}add nsfw NAME LINK` - Adds NSFW gif/image/video for later use in a separate storage.\n"
-            f"`{config.prefix}rmv NAME` - Removes gif/image/video of the given name from the storage.\n"
-            f"`{config.prefix}set VARIABLE VALUE` - Sets the values of BOT config.(Must be used with caution.)\n"
-            f"`{config.prefix}random-line quran/sunnah/quote` - Returns a random line from the given file.",
+            f"`{config.prefix_cache[ctx.guild.id]}del number_of_messages_to_delete/all` - Deletes the number of messages given. If `all` is given, deletes all the messages in the channel.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}greet USERNAME ITEM_NAMES(for multiple items, separate each with space)` - Greets the given username with a gif/image/video.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}add NAME LINK` - Adds gif/image/video for later use.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}add nsfw NAME LINK` - Adds NSFW gif/image/video for later use in a separate storage.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}rmv NAME` - Removes gif/image/video of the given name from the storage.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}set VARIABLE VALUE` - Sets the values of BOT config.(Must be used with caution.)\n"
+            f"`{config.prefix_cache[ctx.guild.id]}random-line quran/sunnah/quote` - Returns a random line from the given file.",
             inline=False
         )
 
@@ -72,8 +72,8 @@ class BotCommands(commands.Cog):
         try:
             if message == '':
                 raise Exception
-            
-            # extracting the data from the message
+
+            # converting the message to int for deletion limit
             amount = int(message)
             # +1 to remove the command itself
             deleted_messages = await ctx.channel.purge(limit=amount+1)
@@ -81,32 +81,33 @@ class BotCommands(commands.Cog):
             deleted_messages.clear()
         except ValueError:
             if message == 'all':
-                # bulk, deletes the messages in a much more efficient way
+                # bulk=True, for deleting the messages more efficiently
                 deleted_messages = await ctx.channel.purge(limit=None, bulk=True)
                 await ctx.send(f"Deleted {len(deleted_messages)} messages.", delete_after=5)
-                
+
                 # clearing the deleted messages list as we don't need them
                 deleted_messages.clear()
             else:
                 raise Exception
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}del number_of_messages_to_delete`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}del number_of_messages_to_delete/all`")
 
     @commands.command(name="list")
     async def list_item(self, ctx, *, message: str = ""):
         try:
             if message == '':
-                # getting the keys from dictionary and converting it to a list
-                item_names = list(config.storage_dict.keys())
+                # converting the dict keys to a list for easier availability checking
+                item_names = list(config.storage_dict_cache[ctx.guild.id].keys())
                 await ctx.send(f"```Available items in storage are: \n{item_names}```")
             elif message == "nsfw": 
-                # getting the keys from dictionary and converting it to a list
-                item_names = list(config.nsfw_storage_dict.keys())
+                # converting the dict keys to a list for easier availability checking
+                item_names = list(config.nsfw_storage_dict_cache[ctx.guild.id].keys())
                 await ctx.send(f"```Available items in nsfw storage are: \n{item_names}```")
             else:
                 raise Exception
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix}list`\nFor NSFW contents, correct syntax: `{config.prefix}list nsfw`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}list`" 
+                           + f"\nFor NSFW contents, correct syntax: `{config.prefix_cache[ctx.guild.id]}list nsfw`")
 
     @commands.command(name="greet")
     async def greet(self, ctx, *, message: str = ""):
@@ -114,7 +115,7 @@ class BotCommands(commands.Cog):
             if message == '':
                 raise Exception
 
-            # extracting the data for the message
+            # extracting the necessary data for processing
             parts = message.split(' ')
             user_name = parts[0]
             item_names = []
@@ -126,10 +127,11 @@ class BotCommands(commands.Cog):
                 item_names.append(part)
 
             # sending the messages
-            await ctx.send(f"Hello {user_name}")
+            await ctx.send(f"Hello, {user_name}. ")
             await self.send_item(item_names, ctx.channel)
         except:
-            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}greet USERNAME ITEM_NAME(for multiple items, separate each with space)`")
+            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}"
+                           + "greet USERNAME ITEM_NAME(for multiple items, separate each with space)`")
 
     @commands.command(name="reddit")
     async def reddit(self, ctx, *, message: str = ""):
@@ -137,7 +139,7 @@ class BotCommands(commands.Cog):
             if message == '':
                 raise Exception
 
-            # creating a object
+            # creating a object for using the reddit api
             fetcher = pain_au_chocolat.Fetch()
 
             # extracting the data from the message
@@ -147,10 +149,10 @@ class BotCommands(commands.Cog):
                 raise Exception
             subreddit_name = message
 
-            # getting the item data
-            submission = await fetcher.get_submission(subreddit_name)
+            # getting the submission to send
+            submission = await fetcher.get_submission(subreddit_name, ctx.guild.id)
 
-            # giving the error message for permission error
+            # returning the error message
             if type(submission) == str:
                 await ctx.send(submission)
                 return
@@ -158,12 +160,13 @@ class BotCommands(commands.Cog):
             # removes the meme after delete_after if the url is NSFW
             if submission.is_nsfw:
                 await ctx.send(f"{submission.title} \nBy: {submission.author}")
-                await ctx.send(submission.url, delete_after=config.delete_after if config.delete_after != 0 else None)
+                await ctx.send(submission.url, delete_after=config.delete_after_cache[ctx.guild.id] 
+                               if config.delete_after_cache[ctx.guild.id] != 0 else None)
             else:
                 await ctx.send(f"{submission.title} \nBy: {submission.author}")
                 await ctx.send(submission.url)
         except:
-            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}reddit SUBREDDIT_NAME`")
+            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}reddit SUBREDDIT_NAME`")
 
     @commands.command(name="add")
     async def add(self, ctx, *, message: str = ''):
@@ -180,11 +183,11 @@ class BotCommands(commands.Cog):
                 item_url = parts[1]
 
                 # adding the item to the dictionary
-                config.storage_dict.update({item_name: item_url})
+                config.storage_dict_cache[ctx.guild.id].update({item_name: item_url})
                 # dumping the whole dict in a string for saving
-                updated = json.dumps(config.storage_dict, ensure_ascii=False)
+                updated = json.dumps(config.storage_dict_cache[ctx.guild.id], ensure_ascii=False)
                 # updating the database
-                await db.set_variable("STORAGE", updated)
+                await db.set_variable(ctx.guild.id, "STORAGE", updated)
 
                 await ctx.send(f"{item_name} added successfully.")
             elif parts[0].lower() == "nsfw":
@@ -193,18 +196,18 @@ class BotCommands(commands.Cog):
                 item_url = parts[2]
 
                 # adding the item to the dictionary
-                config.nsfw_storage_dict.update({item_name: item_url})
+                config.nsfw_storage_dict_cache[ctx.guild.id].update({item_name: item_url})
                 # dumping the whole dict in a string for saving
-                updated = json.dumps(config.nsfw_storage_dict, ensure_ascii=False)
+                updated = json.dumps(config.nsfw_storage_dict_cache[ctx.guild.id], ensure_ascii=False)
                 # updating the database
-                await db.set_variable("NSFW_STORAGE", updated)
+                await db.set_variable(ctx.guild.id, "NSFW_STORAGE", updated)
 
                 await ctx.send(f"{item_name} added successfully.")
             else:
                 raise Exception
         except Exception:
             await ctx.send(
-                f"Error. Correct Syntax: `{config.prefix}add NAME LINK`\nFor nsfw content, Correct Syntax: `{config.prefix}add nsfw NAME LINK`"
+                f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}add NAME LINK`\nFor nsfw content, Correct Syntax: `{config.prefix_cache[ctx.guild.id]}add nsfw NAME LINK`"
             )
 
     @commands.command(name="rmv")
@@ -214,30 +217,30 @@ class BotCommands(commands.Cog):
                 raise Exception
 
             item_name = message
-            
+
             # checking if the item is in the dictionary
-            if item_name not in config.storage_dict.keys() and item_name not in config.nsfw_storage_dict.keys():
+            if item_name not in config.storage_dict_cache[ctx.guild.id].keys() and item_name not in config.nsfw_storage_dict_cache[ctx.guild.id].keys():
                 await ctx.send(f"There is no '{item_name}' in storage. ")
-                await ctx.send(f"Use `{config.prefix}list` to get the list of names.")
+                await ctx.send(f"Use `{config.prefix_cache[ctx.guild.id]}list` to get the list of names.")
             else:
                 try:
                     # removing the item from the dictionary
-                    config.storage_dict.pop(item_name)
+                    config.storage_dict_cache[ctx.guild.id].pop(item_name)
                     # dumping the whole dict in a string for saving
-                    updated = json.dumps(config.storage_dict, ensure_ascii=False)
+                    updated = json.dumps(config.storage_dict_cache[ctx.guild.id], ensure_ascii=False)
                     # updating the database
-                    await db.set_variable("STORAGE", updated)
+                    await db.set_variable(ctx.guild.id, "STORAGE", updated)
                 # removing from nsfw dict on keyerror
                 except KeyError:
-                    config.nsfw_storage_dict.pop(item_name)
+                    config.nsfw_storage_dict_cache[ctx.guild.id].pop(item_name)
                     # dumping the whole dict in a string for saving
-                    updated = json.dumps(config.nsfw_storage_dict, ensure_ascii=False)
+                    updated = json.dumps(config.nsfw_storage_dict_cache[ctx.guild.id], ensure_ascii=False)
                     # updating the database
-                    await db.set_variable("NSFW_STORAGE", updated)
+                    await db.set_variable(ctx.guild.id, "NSFW_STORAGE", updated)
 
                 await ctx.send(f"{item_name} removed successfully.")
         except:
-            await ctx.send(f"Error. Correct Syntax: `{config.prefix}rmv NAME`")
+            await ctx.send(f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}rmv NAME`")
 
     @commands.command(name="set")
     async def set(self, ctx, *, message: str = ""):
@@ -256,16 +259,16 @@ class BotCommands(commands.Cog):
             match variable:
                 case "PRESENCE_UPDATE_CHANNEL_ID":
                     shouldUpdate = True
-                    config.presence_update_channel_id = int(value)
+                    config.notify_channel_id_cache[ctx.guild.id] = int(value)
                 case "PREFIX":
                     shouldUpdate = True
-                    config.prefix = value
+                    config.prefix_cache[ctx.guild.id] = value
                 case "DELETE_AFTER":
                     shouldUpdate = True
-                    config.delete_after = int(value)
+                    config.delete_after_cache[ctx.guild.id] = int(value)
                 case "SEARCH_LIMIT":
                     shouldUpdate = True
-                    config.search_limit = int(value)
+                    config.search_limit_cache[ctx.guild.id] = int(value)
                 case "NSFW_ALLOWED":
                     # parsing the user input
                     if value.lower() == "true" :
@@ -276,11 +279,11 @@ class BotCommands(commands.Cog):
                         await ctx.send("Invalid value for NSFW_ALLOWED. Acceptable values are: true, false")
                         return
                     shouldUpdate = True
-                    config.nsfw_allowed = value
+                    config.nsfw_allowed_cache[ctx.guild.id] = value
 
             if shouldUpdate:
                 # updating the variable in the .env file
-                await db.set_variable(variable, str(value))
+                await db.set_variable(ctx.guild.id, variable, str(value))
 
                 await ctx.send(f"{variable} set to {value} successfully.")
             else:
@@ -288,7 +291,7 @@ class BotCommands(commands.Cog):
                     "Variable not found. Available variables are: PREFIX, DELETE_AFTER, SEARCH_LIMIT, NSFW_ALLOWED, PRESENCE_UPDATE_CHANNEL_ID"
                 )
         except:
-            await ctx.send(f"Error. Correct Syntax: `{config.prefix}set VARIABLE VALUE`")
+            await ctx.send(f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}set VARIABLE VALUE`")
 
     @commands.command(name="random-line")
     async def random_line(self, ctx, *, message: str = ""):
@@ -313,22 +316,31 @@ class BotCommands(commands.Cog):
             else:
                 await ctx.send(f"{item_name} not found. Available files are: {QUOTES}")
         except:
-            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix}random-line quran/sunnah/quote`")
+            await ctx.send(f"Invalid. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}" +
+                           "random-line quran/sunnah/quote`")
 
-    async def send_item(self, item_names, message_channel):
+    async def send_item(self, item_names, message):
         # looking for the correct link for each type
         for item_name in item_names:
-            if item_name in config.storage_dict.keys():
-                await message_channel.send(config.storage_dict[item_name], delete_after = config.delete_after if config.delete_after != 0 else None)
+            if item_name in config.storage_dict_cache[message.guild.id].keys():
+                await message.channel.send(config.storage_dict_cache[message.guild.id][item_name], 
+                                           delete_after = config.delete_after_cache[message.guild.id] 
+                                           if config.delete_after_cache[message.guild.id] != 0 else None)
             # checking for nsfw and permission
-            elif item_name in config.nsfw_storage_dict.keys():
-                if message_channel.nsfw:
+            elif item_name in config.nsfw_storage_dict_cache[message.guild.id].keys():
+                if message.channel.nsfw:
                     # sending the correct link for each type
-                    await message_channel.send(config.nsfw_storage_dict[item_name], delete_after = config.delete_after if config.delete_after != 0 else None)
+                    await message.channel.send(config.nsfw_storage_dict_cache[message.guild.id][item_name], 
+                                               delete_after = config.delete_after_cache[message.guild.id] 
+                                               if config.delete_after_cache[message.guild.id] != 0 else None)
                 else:
-                    await message_channel.send("Invalid channel for NSFW content. Use the command in a NSFW channel. ")
+                    await message.channel.send("Invalid channel for NSFW content. "
+                                               + "Use the command in a NSFW channel. ")
             else:
-                await message_channel.send(f"There is no '{item_name}' in storage. Use `{config.prefix}list` to get the item names.\nFor NSFW contents, use `{config.prefix}list nsfw`")
+                await message.channel.send(
+                    f"There is no '{item_name}' in storage. Use `{config.prefix_cache[message.guild.id]}list`" + 
+                    f" to get the item names.\nFor NSFW contents, use `{config.prefix_cache[message.guild.id]}list nsfw`"
+                )
 
 async def setup(bot):
     await bot.add_cog(BotCommands(bot))

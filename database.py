@@ -1,14 +1,20 @@
 import asyncpg
 import config
 
-class Database():
+
+class Database:
     def __init__(self):
         self.pool = None
 
     async def connect(self):
         try:
             # since we have no Authentication, we can just use the URL
-            self.pool = await asyncpg.create_pool(config.DATABASE_URL, ssl=True, min_size=1, max_size=15)
+            self.pool = await asyncpg.create_pool(
+                config.DATABASE_URL,
+                ssl=True,
+                min_size=1,
+                max_size=15,
+            )
 
             # gets the database connection from pool
             async with self.pool.acquire() as conn:
@@ -29,14 +35,15 @@ class Database():
                 # creating a SQL table for dynamic variables
                 await conn.execute(
                     """
-                    -- creating a table called 'SERVER_DATA' if not exists
-                    CREATE TABLE IF NOT EXISTS SERVER_DATA (
-                        variable_name VARCHAR(100),
-                        variable_value TEXT,
+                    -- creating a table called 'DATA' if not exists
+                    CREATE TABLE IF NOT EXISTS DATA (
+                        ID BIGINT,
+                        NAME VARCHAR(100),
+                        VALUE TEXT,
                         created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Dhaka'),
                         updated_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Dhaka'),
-                        -- ensures that each combination of server_id and variable_name is unique
-                        PRIMARY KEY (variable_name)
+                        -- ensures that each combination of server id and variable name is unique
+                        PRIMARY KEY (ID, NAME)
                     );
                 """
                 )
@@ -44,7 +51,9 @@ class Database():
         except Exception as error:
             print(f"❌ Error creating tables: {error}")
 
-    async def set_variable(self,variable_name: str, variable_value: str):
+    async def set_variable(
+        self, server_id: int, variable_name: str, variable_value: str
+    ):
         try:
             # gets the database connection from pool
             async with self.pool.acquire() as conn:
@@ -52,15 +61,16 @@ class Database():
                 await conn.execute(
                     """
                     -- inserts a new variable in the table
-                    INSERT INTO SERVER_DATA (variable_name, variable_value)
-                    -- $1 $2 are asyncpg placeholders
-                    VALUES ($1, $2)
-                    -- conflict occurs when the variable_name already exists
-                    -- if the variable_name already exists, it updates the variable_value
-                    ON CONFLICT (variable_name) DO UPDATE
-                    SET variable_value = $2,
+                    INSERT INTO DATA (ID, NAME, VALUE)
+                    -- $1, $2 and $3 are asyncpg placeholders
+                    VALUES ($1, $2, $3)
+                    -- conflict occurs when the variable name already exists
+                    -- if the variable name already exists, it updates the variable_value
+                    ON CONFLICT (ID, NAME) DO UPDATE
+                    SET VALUE = $3,
                     updated_at = TIMEZONE('Asia/Dhaka', NOW())
                     """,
+                    server_id,
                     variable_name,
                     variable_value,
                 )
@@ -68,24 +78,28 @@ class Database():
         except Exception as error:
             print(f"❌ Error setting variables: {error}")
 
-    async def get_variable(self, variable_name: str):
+    async def load_all_variables(self, variable_name: str):
         try:
+            dictionary = {}
+
             # gets the database connection from pool
             async with self.pool.acquire() as conn:
-                result = await conn.fetchrow(
+                rows = await conn.fetch(
                     """
-                    -- gets the variable value from the table
-                    SELECT variable_value
-                    FROM SERVER_DATA
-                    WHERE variable_name = $1
+                    -- gets all the prefixes
+                    SELECT ID, VALUE
+                    FROM DATA
+                    WHERE NAME = $1
                     """,
-                    variable_name
-                )
-                # returning the variable value
-                return result["variable_value"] if result else None
-        except Exception as error:
-            print(f"Error at fetching variable value: {error}")
-            return None
+                    variable_name,
+                );
+                # parsing the data into a dictionary
+                for row in rows:
+                    dictionary.update({row["id"]: row["value"]})
 
+                return dictionary
+        except Exception as error:
+            print(f"Error at loading prefixes: {error}")
+            return None
 
 db = Database()
