@@ -3,8 +3,7 @@ import dotenv
 
 dotenv.load_dotenv()
 
-BOT_TOKEN = "MTQyNTcxMTA2OTI2NzIzNDkxMg.G1TdBq.OzUN-A1wCYgvoSQw2k96d9QOkndtaudBnxvwvo"
-# BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_URL = os.getenv("REPO_URL")
 DATABASE_URL = os.getenv("DATABASE_URL")
 USERNAME = os.getenv("REDDIT_USERNAME")
