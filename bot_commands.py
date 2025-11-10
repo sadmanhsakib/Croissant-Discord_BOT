@@ -226,14 +226,20 @@ class BotCommands(commands.Cog):
                 channel_id = parts[1]
                 time = parts[2]
 
-                # adding the channel_id and time in the dictionary
-                config.auto_delete_cache[ctx.guild.id].update({channel_id: time})
-                # dumping the whole dict in a string for saving
-                updated = json.dumps(config.auto_delete_cache[ctx.guild.id], ensure_ascii=False)
-                # updating the database
-                await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
+                channel = self.bot.get_channel(channel_id)
 
-                await ctx.send(f"Auto delete added successfully.")
+                if channel:
+                    # adding the channel_id and time in the dictionary
+                    config.auto_delete_cache[ctx.guild.id].update({channel_id: time})
+                    # dumping the whole dict in a string for saving
+                    updated = json.dumps(config.auto_delete_cache[ctx.guild.id], ensure_ascii=False)
+                    # updating the database
+                    await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
+
+                    await ctx.send(f"{channel.name} scheduled for automatic deletion at {time} every day. ")
+                else:
+                    await ctx.send(f"{channel_id} is not a valid channel. ")
+                    
             else:
                 raise Exception
         except Exception:
