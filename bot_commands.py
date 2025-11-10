@@ -112,19 +112,21 @@ class BotCommands(commands.Cog):
                 channel_names = []
 
                 # converting the dict keys to a list for easier availability checking
-                channel_list = list(config.auto_delete_dict_cache[ctx.guild.id].keys())
+                channel_list = list(config.auto_delete_cache[ctx.guild.id].keys())
 
                 # getting and adding the channel names to the dictionary
                 for channel in channel_list:
-                    channel_name = self.bot.get_channel(channel).name
+                    channel_name = self.bot.get_channel(int(channel)).name
                     channel_names.append(channel_name)
 
                 await ctx.send(f"```Channels scheduled for automatic deletion: \n{channel_names}```")
             else:
                 raise Exception
-        except:
+        except Exception as error:
+            print(f"Error at listing items: {error}")
             await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}list`" 
-                           + f"\nFor NSFW contents, correct syntax: `{config.prefix_cache[ctx.guild.id]}list nsfw`")
+                           + f"\nFor NSFW contents, correct syntax: `{config.prefix_cache[ctx.guild.id]}list nsfw`"
+                           + f"\nFor scheduled channels, correct syntax: `{config.prefix_cache[ctx.guild.id]}list autodelete`")
 
     @commands.command(name="greet")
     async def greet(self, ctx, *, message: str = ""):
@@ -236,15 +238,19 @@ class BotCommands(commands.Cog):
                 raise Exception
         except Exception:
             await ctx.send(
-                f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}add NAME LINK`\nFor nsfw content, Correct Syntax: `{config.prefix_cache[ctx.guild.id]}add nsfw NAME LINK`"
-            )
+                f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}add NAME LINK`"
+                + f"\nFor nsfw content, Correct Syntax: `{config.prefix_cache[ctx.guild.id]}add nsfw NAME LINK`"
+                + f"\nFor scheduled channels, correct syntax: `{config.prefix_cache[ctx.guild.id]}add autodelete CHANNEL_ID TIME(HOUR:MINUTE:SECOND)`")
 
     @commands.command(name="rmv")
     async def rmv(self, ctx, *, message: str = ''):
         try:
             if message == '':
                 raise Exception
-            elif len(message) == 1:
+
+            parts = message.split(' ')
+
+            if len(parts) == 1:
                 item_name = message
 
                 # checking if the item is in the dictionary
@@ -268,10 +274,10 @@ class BotCommands(commands.Cog):
                         await db.set_variable(ctx.guild.id, "NSFW_STORAGE", updated)
 
                     await ctx.send(f"{item_name} removed successfully.")
-            elif len(message) == 2:
-                if message[0].lower() == "autodelete":
-                    channel_id = int(message[1])
-
+            elif len(parts) == 2:
+                if parts[0].lower() == "autodelete":
+                    channel_id = parts[1]
+                    
                     # checking if the item is in the dictionary
                     if channel_id in config.auto_delete_cache[ctx.guild.id].keys():
                         config.auto_delete_cache[ctx.guild.id].pop(channel_id)
@@ -288,7 +294,8 @@ class BotCommands(commands.Cog):
             else:
                 raise Exception
         except:
-            await ctx.send(f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}rmv NAME`")
+            await ctx.send(f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}rmv NAME`"
+                           + f"\nFor scheduled channels, correct syntax: `{config.prefix_cache[ctx.guild.id]}rmv autodelete CHANNEL_ID`")
 
     @commands.command(name="set")
     async def set(self, ctx, *, message: str = ""):
@@ -394,12 +401,12 @@ class BotCommands(commands.Cog):
     async def delete_channel_message(self, channel_id: int):
         # getting the channel object from the channel id
         channel = self.bot.get_channel(channel_id)
-        
+
         if channel:
             try:
                 # bull=True deletes the messages more efficiently(used when deleting a lot of messages)
                 deleted_messages = await channel.purge(limit=None, bulk=True)
-                
+
                 await channel.send(f"Deleted {len(deleted_messages)} messages.", delete_after=5)
                 # clearing the deleted messages list as we don't need them
                 deleted_messages.clear()
@@ -411,16 +418,35 @@ class BotCommands(commands.Cog):
             await channel.send("Channel not found.")
 
     @tasks.loop(minutes=1)
-    async def scheduler(self, ctx):
-        if config.auto_delete_dict_cache[ctx.guild.id] != {}:
-            # setting the timezone to Asia/Dhaka
-            offset = datetime.timezone(datetime.timedelta(hours=6))
-            now = datetime.datetime.now(offset).strftime("%H:%M:%S")
-            
-            # deleting each messages in the scheduler
-            for channel_id in config.auto_delete_dict_cache[ctx.guild.id].keys():
-                if config.auto_delete_dict_cache[ctx.guild.id][channel_id] <= now:
-                    # deleting the message
-                    await self.delete_channel_message(channel_id)
+    async def scheduler(self):
+        # waiting for the bot to be ready
+        await self.bot.wait_until_ready()
+
+        # loading all the dict for each server
+        for server_id, schedules in config.auto_delete_cache.items():
+            # checking if the server has any scheduled channels
+            if schedules:
+                
+                # deleting the scheduled channels
+                for channel_id in schedules.keys():
+                    # setting the timezone to Asia/Dhaka
+                    offset = datetime.timezone(datetime.timedelta(hours=6))
+                    
+                    # parsing the datetime data
+                    now = datetime.datetime.now(offset).strftime("%H:%M:%S")
+                    now = datetime.datetime.strptime(now, "%H:%M:%S")
+                    time = datetime.datetime.strptime(schedules[channel_id], "%H:%M:%S")
+                    
+                    duration = (now - time).total_seconds()
+                    
+                    # to avoid multiple unwanted deletions
+                    if duration < 60 and duration >= 0:
+                        await self.delete_channel_message(int(channel_id))
+               
+    # serves as a setup for the scheduler to avoid errors, potentially before the bot is ready
+    @scheduler.before_loop
+    async def before_scheduler(self):
+        await self.bot.wait_until_ready()
+              
 async def setup(bot):
     await bot.add_cog(BotCommands(bot))

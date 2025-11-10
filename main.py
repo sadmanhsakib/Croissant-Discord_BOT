@@ -8,7 +8,6 @@ from keep_alive import keep_alive
 
 keep_alive()
 
-
 # giving the permissions
 intents = discord.Intents.default()
 intents.message_content = True
@@ -24,21 +23,33 @@ async def get_prefix(bot, message):
 
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
+cog = None
 
 @bot.event
 # when the bot starts
 async def on_ready():
+    global cog
+
     # connecting to the database
     await db.connect()
     # loading the data from the database
     await config.load_all_data()
-  
+
     # authenticating the reddit api
     await pain_au_chocolat.authenticate()
-    
+
     # loading the command script
     await bot.load_extension("bot_commands")
-    
+
+    # importing and creating a cog object
+    from bot_commands import BotCommands
+    cog = BotCommands(bot)
+
+    # this won't actually start until before_scheduler completes
+    # the scheduler only starts after wait_until_ready() completes
+    # scheduler is a background task, not a coroutine, so no need to await
+    cog.scheduler.start()
+
     # prints a message in console when ready
     print(f"✅Logged in as: {bot.user}")
 
@@ -96,9 +107,6 @@ async def on_message(message):
                         item_names.append(part[1:])
                 except IndexError:  
                     return
-        
-        from bot_commands import BotCommands
-        cog = BotCommands(bot)
         
         if item_names:
             # sending items if applicable
