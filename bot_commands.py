@@ -1,7 +1,7 @@
-import os, json, random
+import os, json, random, datetime
 import discord
 import pain_au_chocolat, config
-from discord.ext import commands
+from discord.ext import commands, tasks
 from database import db
 
 class BotCommands(commands.Cog):
@@ -46,8 +46,9 @@ class BotCommands(commands.Cog):
             f"`{config.prefix_cache[ctx.guild.id]}status` - Returns the status of the bot.\n"
             f"`{config.prefix_cache[ctx.guild.id]}ping` - Returns the latency of the BOT in milliseconds.\n"
             f"`{config.prefix_cache[ctx.guild.id]}list` - Returns all the available item names from the storage.\n"
-            f"`{config.prefix_cache[ctx.guild.id]}list nsfw` - Returns all the available NSFW item names from the storage.\n",
-            inline=False
+            f"`{config.prefix_cache[ctx.guild.id]}list nsfw` - Returns all the available NSFW item names from the storage.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}list autodelete` - Returns all the scheduled channel names for automatic deletion.\n",
+            inline=False,
         )
 
         # adding the complex commands
@@ -59,7 +60,9 @@ class BotCommands(commands.Cog):
             f"`{config.prefix_cache[ctx.guild.id]}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
             f"`{config.prefix_cache[ctx.guild.id]}add NAME LINK` - Adds gif/image/video for later use.\n"
             f"`{config.prefix_cache[ctx.guild.id]}add nsfw NAME LINK` - Adds NSFW gif/image/video for later use in a separate storage.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}add CHANNEL_ID TIME(HOUR:MINUTE:SECOND)` - Adds given discord channel for automatic deletion after a given time.\n"
             f"`{config.prefix_cache[ctx.guild.id]}rmv NAME` - Removes gif/image/video of the given name from the storage.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}rmv AutoDelete CHANNEL_ID` - Removes the given discord channel from automatic deletion.\n"
             f"`{config.prefix_cache[ctx.guild.id]}set VARIABLE VALUE` - Sets the values of BOT config.(Must be used with caution.)\n"
             f"`{config.prefix_cache[ctx.guild.id]}random-line quran/sunnah/quote` - Returns a random line from the given file.",
             inline=False
@@ -83,7 +86,9 @@ class BotCommands(commands.Cog):
             if message == 'all':
                 # bulk=True, for deleting the messages more efficiently
                 deleted_messages = await ctx.channel.purge(limit=None, bulk=True)
-                await ctx.send(f"Deleted {len(deleted_messages)} messages.", delete_after=5)
+                await ctx.send(
+                    f"Deleted {len(deleted_messages)} messages.", delete_after=5
+                )
 
                 # clearing the deleted messages list as we don't need them
                 deleted_messages.clear()
@@ -99,10 +104,22 @@ class BotCommands(commands.Cog):
                 # converting the dict keys to a list for easier availability checking
                 item_names = list(config.storage_dict_cache[ctx.guild.id].keys())
                 await ctx.send(f"```Available items in storage are: \n{item_names}```")
-            elif message == "nsfw": 
+            elif message.lower() == "nsfw": 
                 # converting the dict keys to a list for easier availability checking
                 item_names = list(config.nsfw_storage_dict_cache[ctx.guild.id].keys())
                 await ctx.send(f"```Available items in nsfw storage are: \n{item_names}```")
+            elif message.lower() == "autodelete":
+                channel_names = []
+
+                # converting the dict keys to a list for easier availability checking
+                channel_list = list(config.auto_delete_dict_cache[ctx.guild.id].keys())
+
+                # getting and adding the channel names to the dictionary
+                for channel in channel_list:
+                    channel_name = self.bot.get_channel(channel).name
+                    channel_names.append(channel_name)
+
+                await ctx.send(f"```Channels scheduled for automatic deletion: \n{channel_names}```")
             else:
                 raise Exception
         except:
@@ -203,6 +220,18 @@ class BotCommands(commands.Cog):
                 await db.set_variable(ctx.guild.id, "NSFW_STORAGE", updated)
 
                 await ctx.send(f"{item_name} added successfully.")
+            elif parts[0].lower() == "autodelete":
+                channel_id = parts[1]
+                time = parts[2]
+
+                # adding the channel_id and time in the dictionary
+                config.auto_delete_cache[ctx.guild.id].update({channel_id: time})
+                # dumping the whole dict in a string for saving
+                updated = json.dumps(config.auto_delete_cache[ctx.guild.id], ensure_ascii=False)
+                # updating the database
+                await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
+
+                await ctx.send(f"Auto delete added successfully.")
             else:
                 raise Exception
         except Exception:
@@ -215,30 +244,49 @@ class BotCommands(commands.Cog):
         try:
             if message == '':
                 raise Exception
+            elif len(message) == 1:
+                item_name = message
 
-            item_name = message
+                # checking if the item is in the dictionary
+                if item_name not in config.storage_dict_cache[ctx.guild.id].keys() and item_name not in config.nsfw_storage_dict_cache[ctx.guild.id].keys():
+                    await ctx.send(f"There is no '{item_name}' in storage. ")
+                    await ctx.send(f"Use `{config.prefix_cache[ctx.guild.id]}list` to get the list of names.")
+                else:
+                    try:
+                        # removing the item from the dictionary
+                        config.storage_dict_cache[ctx.guild.id].pop(item_name)
+                        # dumping the whole dict in a string for saving
+                        updated = json.dumps(config.storage_dict_cache[ctx.guild.id], ensure_ascii=False)
+                        # updating the database
+                        await db.set_variable(ctx.guild.id, "STORAGE", updated)
+                    # removing from nsfw dict on keyerror
+                    except KeyError:
+                        config.nsfw_storage_dict_cache[ctx.guild.id].pop(item_name)
+                        # dumping the whole dict in a string for saving
+                        updated = json.dumps(config.nsfw_storage_dict_cache[ctx.guild.id], ensure_ascii=False)
+                        # updating the database
+                        await db.set_variable(ctx.guild.id, "NSFW_STORAGE", updated)
 
-            # checking if the item is in the dictionary
-            if item_name not in config.storage_dict_cache[ctx.guild.id].keys() and item_name not in config.nsfw_storage_dict_cache[ctx.guild.id].keys():
-                await ctx.send(f"There is no '{item_name}' in storage. ")
-                await ctx.send(f"Use `{config.prefix_cache[ctx.guild.id]}list` to get the list of names.")
+                    await ctx.send(f"{item_name} removed successfully.")
+            elif len(message) == 2:
+                if message[0].lower() == "autodelete":
+                    channel_id = int(message[1])
+
+                    # checking if the item is in the dictionary
+                    if channel_id in config.auto_delete_cache[ctx.guild.id].keys():
+                        config.auto_delete_cache[ctx.guild.id].pop(channel_id)
+                        # dumping the whole dict in a string for saving
+                        updated = json.dumps(config.auto_delete_cache[ctx.guild.id], ensure_ascii=False)
+                        # updating the database
+                        await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
+
+                        await ctx.send(f"Auto delete for channel {channel_id} removed successfully.")
+                    else:
+                        await ctx.send(f"There is no {channel_id} in storage scheduled for auto deletion. ")
+                else:
+                    raise Exception
             else:
-                try:
-                    # removing the item from the dictionary
-                    config.storage_dict_cache[ctx.guild.id].pop(item_name)
-                    # dumping the whole dict in a string for saving
-                    updated = json.dumps(config.storage_dict_cache[ctx.guild.id], ensure_ascii=False)
-                    # updating the database
-                    await db.set_variable(ctx.guild.id, "STORAGE", updated)
-                # removing from nsfw dict on keyerror
-                except KeyError:
-                    config.nsfw_storage_dict_cache[ctx.guild.id].pop(item_name)
-                    # dumping the whole dict in a string for saving
-                    updated = json.dumps(config.nsfw_storage_dict_cache[ctx.guild.id], ensure_ascii=False)
-                    # updating the database
-                    await db.set_variable(ctx.guild.id, "NSFW_STORAGE", updated)
-
-                await ctx.send(f"{item_name} removed successfully.")
+                raise Exception
         except:
             await ctx.send(f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}rmv NAME`")
 
@@ -328,7 +376,7 @@ class BotCommands(commands.Cog):
                                            if config.delete_after_cache[message_channel.guild.id] != 0 else None)
             # checking for nsfw and permission
             elif item_name in config.nsfw_storage_dict_cache[message_channel.guild.id].keys():
-                
+
                 if message_channel.nsfw:
                     # sending the correct link for each type
                     await message_channel.send(config.nsfw_storage_dict_cache[message_channel.guild.id][item_name], 
@@ -343,5 +391,36 @@ class BotCommands(commands.Cog):
                     f" to get the item names.\nFor NSFW contents, use `{config.prefix_cache[message_channel.guild.id]}list nsfw`"
                 )
 
+    async def delete_channel_message(self, channel_id: int):
+        # getting the channel object from the channel id
+        channel = self.bot.get_channel(channel_id)
+        
+        if channel:
+            try:
+                # bull=True deletes the messages more efficiently(used when deleting a lot of messages)
+                deleted_messages = await channel.purge(limit=None, bulk=True)
+                
+                await channel.send(f"Deleted {len(deleted_messages)} messages.", delete_after=5)
+                # clearing the deleted messages list as we don't need them
+                deleted_messages.clear()
+            except discord.Forbidden:
+                await channel.send(f"Bot doesn't have permission to delete messages in: {channel.name}")
+            except Exception as error:
+                await channel.send(f"Error deleting messages in: {channel.name}-> {error}")
+        else:
+            await channel.send("Channel not found.")
+
+    @tasks.loop(minutes=1)
+    async def scheduler(self, ctx):
+        if config.auto_delete_dict_cache[ctx.guild.id] != {}:
+            # setting the timezone to Asia/Dhaka
+            offset = datetime.timezone(datetime.timedelta(hours=6))
+            now = datetime.datetime.now(offset).strftime("%H:%M:%S")
+            
+            # deleting each messages in the scheduler
+            for channel_id in config.auto_delete_dict_cache[ctx.guild.id].keys():
+                if config.auto_delete_dict_cache[ctx.guild.id][channel_id] <= now:
+                    # deleting the message
+                    await self.delete_channel_message(channel_id)
 async def setup(bot):
     await bot.add_cog(BotCommands(bot))

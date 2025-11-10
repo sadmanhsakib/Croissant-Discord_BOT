@@ -18,13 +18,17 @@ delete_after_cache = None
 notify_channel_id_cache = None
 storage_dict_cache = None
 nsfw_storage_dict_cache = None
-
-from database import db
+auto_delete_cache = None
 
 
 async def load_all_data():
-    global prefix_cache, search_limit_cache, nsfw_allowed_cache, delete_after_cache, notify_channel_id_cache, storage_dict_cache, nsfw_storage_dict_cache
+    from database import db
+    
+    global prefix_cache, search_limit_cache, nsfw_allowed_cache, delete_after_cache
+    global notify_channel_id_cache, storage_dict_cache, nsfw_storage_dict_cache
+    global auto_delete_cache
 
+    # loading the dictionaries
     prefix_cache = await db.load_all_variables("PREFIX")
 
     search_limit_cache = await db.load_all_variables("SEARCH_LIMIT")
@@ -50,8 +54,15 @@ async def load_all_data():
     nsfw_storage_dict_cache = await db.load_all_variables("NSFW_STORAGE")
     for key in nsfw_storage_dict_cache:
         nsfw_storage_dict_cache[key] = json.loads(nsfw_storage_dict_cache[key])
+        
+    auto_delete_cache = await db.load_all_variables("AUTO_DELETE")
+    for key in auto_delete_cache:
+        auto_delete_cache[key] = json.loads(auto_delete_cache[key])
+
 
 async def set_default(server_id: int):
+    from database import db
+    
     # setting the default values (called when joined in a  new server)
     await db.set_variable(server_id, "PREFIX", "-")
     await db.set_variable(server_id, "SEARCH_LIMIT", "50")
@@ -60,5 +71,6 @@ async def set_default(server_id: int):
     await db.set_variable(server_id, "PRESENCE_UPDATE_CHANNEL_ID", "0")
     await db.set_variable(server_id, "STORAGE", "{}")
     await db.set_variable(server_id, "NSFW_STORAGE", "{}")
+    await db.set_variable(server_id, "AUTO_DELETE", "{}")
 
     print("✅Successfully set the default values for this server!")
