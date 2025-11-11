@@ -226,7 +226,7 @@ class BotCommands(commands.Cog):
                 channel_id = parts[1]
                 time = parts[2]
 
-                channel = self.bot.get_channel(channel_id)
+                channel = self.bot.get_channel(int(channel_id))
 
                 if channel:
                     # adding the channel_id and time in the dictionary
