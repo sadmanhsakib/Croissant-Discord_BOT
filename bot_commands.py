@@ -239,7 +239,7 @@ class BotCommands(commands.Cog):
                     await ctx.send(f"{channel.name} scheduled for automatic deletion at {time} every day. ")
                 else:
                     await ctx.send(f"{channel_id} is not a valid channel. ")
-                    
+
             else:
                 raise Exception
         except Exception:
@@ -283,7 +283,7 @@ class BotCommands(commands.Cog):
             elif len(parts) == 2:
                 if parts[0].lower() == "autodelete":
                     channel_id = parts[1]
-                    
+
                     # checking if the item is in the dictionary
                     if channel_id in config.auto_delete_cache[ctx.guild.id].keys():
                         config.auto_delete_cache[ctx.guild.id].pop(channel_id)
@@ -318,7 +318,7 @@ class BotCommands(commands.Cog):
 
             # checking for each case which variable to update
             match variable:
-                case "PRESENCE_UPDATE_CHANNEL_ID":
+                case "ACTIVITY_CHANNEL_ID":
                     shouldUpdate = True
                     config.notify_channel_id_cache[ctx.guild.id] = int(value)
                 case "PREFIX":
@@ -349,7 +349,7 @@ class BotCommands(commands.Cog):
                 await ctx.send(f"{variable} set to {value} successfully.")
             else:
                 await ctx.send(
-                    "Variable not found. Available variables are: PREFIX, DELETE_AFTER, SEARCH_LIMIT, NSFW_ALLOWED, PRESENCE_UPDATE_CHANNEL_ID"
+                    "Variable not found. Available variables are: PREFIX, DELETE_AFTER, SEARCH_LIMIT, NSFW_ALLOWED, ACTIVITY_CHANNEL_ID"
                 )
         except:
             await ctx.send(f"Error. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}set VARIABLE VALUE`")
@@ -432,27 +432,27 @@ class BotCommands(commands.Cog):
         for server_id, schedules in config.auto_delete_cache.items():
             # checking if the server has any scheduled channels
             if schedules:
-                
+
                 # deleting the scheduled channels
                 for channel_id in schedules.keys():
                     # setting the timezone to Asia/Dhaka
                     offset = datetime.timezone(datetime.timedelta(hours=6))
-                    
+
                     # parsing the datetime data
                     now = datetime.datetime.now(offset).strftime("%H:%M:%S")
                     now = datetime.datetime.strptime(now, "%H:%M:%S")
                     time = datetime.datetime.strptime(schedules[channel_id], "%H:%M:%S")
-                    
+
                     duration = (now - time).total_seconds()
-                    
+
                     # to avoid multiple unwanted deletions
                     if duration < 60 and duration >= 0:
                         await self.delete_channel_message(int(channel_id))
-               
+
     # serves as a setup for the scheduler to avoid errors, potentially before the bot is ready
     @scheduler.before_loop
     async def before_scheduler(self):
         await self.bot.wait_until_ready()
-              
+
 async def setup(bot):
     await bot.add_cog(BotCommands(bot))

@@ -76,9 +76,14 @@ async def on_guild_join(guild):
         # instructing the users on how to set up the channel
         await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
         await channel.send(
-            f"If you want to use this feature, use the '{config.prefix_cache[guild.id]}set<space>PRESENCE_UPDATE_CHANNEL_ID<space>channel_id' command. "
+            f"If you want to use this feature, use the '{config.prefix_cache[guild.id]}set<space>ACTIVITY_CHANNEL_ID<space>channel_id' command. "
         )
         await channel.send("If you don't want to use this feature, you can ignore it. ")
+
+@bot.event
+async def on_guild_remove(guild):
+    # removes all the data from the database and resets the variables
+    await config.remove_data(guild.id)
 
 @bot.event
 # when the user sends a message in server
@@ -120,12 +125,12 @@ async def on_message(message):
 # called when a member of the server changes their activity
 # before and after represents the member that has changed presence;
 async def on_presence_update(before, after):
-    presence_update_channel_id = config.notify_channel_id_cache[after.guild.id]
-    channel = bot.get_channel(presence_update_channel_id)
+    channel_id = config.notify_channel_id_cache[after.guild.id]
+    channel = bot.get_channel(channel_id)
 
     # prevents replying to bot's presence update
     # doesn't update presence if the presence_update_channel is none
-    if not after.bot and int(presence_update_channel_id) != 0:
+    if not after.bot and int(channel_id) != 0:
         old_status = str(before.status)
         new_status = str(after.status)
 

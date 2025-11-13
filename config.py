@@ -23,7 +23,7 @@ auto_delete_cache = None
 
 async def load_all_data():
     from database import db
-    
+
     global prefix_cache, search_limit_cache, nsfw_allowed_cache, delete_after_cache
     global notify_channel_id_cache, storage_dict_cache, nsfw_storage_dict_cache
     global auto_delete_cache
@@ -43,18 +43,18 @@ async def load_all_data():
     for key in delete_after_cache:
         delete_after_cache[key] = int(delete_after_cache[key])
 
-    notify_channel_id_cache = await db.load_all_variables("PRESENCE_UPDATE_CHANNEL_ID")
+    notify_channel_id_cache = await db.load_all_variables("ACTIVITY_CHANNEL_ID")
     for key in notify_channel_id_cache:
         notify_channel_id_cache[key] = int(notify_channel_id_cache[key])
 
     storage_dict_cache = await db.load_all_variables("STORAGE")
     for key in storage_dict_cache:
         storage_dict_cache[key] = json.loads(storage_dict_cache[key])
-    
+
     nsfw_storage_dict_cache = await db.load_all_variables("NSFW_STORAGE")
     for key in nsfw_storage_dict_cache:
         nsfw_storage_dict_cache[key] = json.loads(nsfw_storage_dict_cache[key])
-        
+
     auto_delete_cache = await db.load_all_variables("AUTO_DELETE")
     for key in auto_delete_cache:
         auto_delete_cache[key] = json.loads(auto_delete_cache[key])
@@ -62,15 +62,47 @@ async def load_all_data():
 
 async def set_default(server_id: int):
     from database import db
-    
+
     # setting the default values (called when joined in a  new server)
     await db.set_variable(server_id, "PREFIX", "-")
     await db.set_variable(server_id, "SEARCH_LIMIT", "50")
     await db.set_variable(server_id, "NSFW_ALLOWED", "false")
     await db.set_variable(server_id, "DELETE_AFTER", "10")
-    await db.set_variable(server_id, "PRESENCE_UPDATE_CHANNEL_ID", "0")
+    await db.set_variable(server_id, "ACTIVITY_CHANNEL_ID", "0")
     await db.set_variable(server_id, "STORAGE", "{}")
     await db.set_variable(server_id, "NSFW_STORAGE", "{}")
     await db.set_variable(server_id, "AUTO_DELETE", "{}")
 
     print("✅Successfully set the default values for this server!")
+
+async def remove_data(server_id: int):
+    from database import db
+
+    global prefix_cache, search_limit_cache, nsfw_allowed_cache, delete_after_cache
+    global notify_channel_id_cache, storage_dict_cache, nsfw_storage_dict_cache
+    global auto_delete_cache
+    
+    # removing the data from the database and resetting the variables
+    prefix_cache.pop(server_id)
+    await db.set_variable(server_id, "PREFIX", None)
+    
+    search_limit_cache.pop(server_id)
+    await db.set_variable(server_id, "SEARCH_LIMIT", None)
+    
+    nsfw_allowed_cache.pop(server_id)
+    await db.set_variable(server_id, "NSFW_ALLOWED", None)
+    
+    delete_after_cache.pop(server_id)
+    await db.set_variable(server_id, "DELETE_AFTER", None)
+    
+    notify_channel_id_cache.pop(server_id)
+    await db.set_variable(server_id, "ACTIVITY_CHANNEL_ID", None)
+    await db.set_variable(server_id, "STORAGE", None)
+    
+    nsfw_storage_dict_cache.pop(server_id)
+    await db.set_variable(server_id, "NSFW_STORAGE", None)
+    
+    auto_delete_cache.pop(server_id)
+    await db.set_variable(server_id, "AUTO_DELETE", None)
+
+    print("✅Successfully removed the data from the database!")
