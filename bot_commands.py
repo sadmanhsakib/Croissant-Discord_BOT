@@ -60,7 +60,7 @@ class BotCommands(commands.Cog):
             f"`{config.prefix_cache[ctx.guild.id]}reddit SUBREDDIT_NAME` - Returns gif or images from subreddit.\n"
             f"`{config.prefix_cache[ctx.guild.id]}add NAME LINK` - Adds gif/image/video for later use.\n"
             f"`{config.prefix_cache[ctx.guild.id]}add nsfw NAME LINK` - Adds NSFW gif/image/video for later use in a separate storage.\n"
-            f"`{config.prefix_cache[ctx.guild.id]}add CHANNEL_ID TIME(HOUR:MINUTE:SECOND)` - Adds given discord channel for automatic deletion after a given time.\n"
+            f"`{config.prefix_cache[ctx.guild.id]}add AutoDelete CHANNEL_ID TIME(HOUR:MINUTE:SECOND)` - Adds given discord channel for automatic deletion after a given time.\n"
             f"`{config.prefix_cache[ctx.guild.id]}rmv NAME` - Removes gif/image/video of the given name from the storage.\n"
             f"`{config.prefix_cache[ctx.guild.id]}rmv AutoDelete CHANNEL_ID` - Removes the given discord channel from automatic deletion.\n"
             f"`{config.prefix_cache[ctx.guild.id]}set VARIABLE VALUE` - Sets the values of BOT config.(Must be used with caution.)\n"
@@ -423,7 +423,7 @@ class BotCommands(commands.Cog):
         else:
             await channel.send("Channel not found.")
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(seconds=60)
     async def scheduler(self):
         # waiting for the bot to be ready
         await self.bot.wait_until_ready()
