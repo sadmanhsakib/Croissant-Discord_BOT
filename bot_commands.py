@@ -383,6 +383,8 @@ class BotCommands(commands.Cog):
     async def send_item(self, item_names, message_channel):
         # looking for the correct link for each type
         for item_name in item_names:
+            item_name = item_name.lower()
+            
             if item_name in config.storage_dict_cache[message_channel.guild.id].keys():
                 await message_channel.send(config.storage_dict_cache[message_channel.guild.id][item_name], 
                                            delete_after = config.delete_after_cache[message_channel.guild.id] 
