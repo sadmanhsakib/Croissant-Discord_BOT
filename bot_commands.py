@@ -198,7 +198,7 @@ class BotCommands(commands.Cog):
 
             # for non nsfw items
             if len(parts) == 2:
-                item_name = parts[0]
+                item_name = parts[0].lower()
                 item_url = parts[1]
 
                 # adding the item to the dictionary
@@ -257,7 +257,7 @@ class BotCommands(commands.Cog):
             parts = message.split(' ')
 
             if len(parts) == 1:
-                item_name = message
+                item_name = message.lower()
 
                 # checking if the item is in the dictionary
                 if item_name not in config.storage_dict_cache[ctx.guild.id].keys() and item_name not in config.nsfw_storage_dict_cache[ctx.guild.id].keys():
