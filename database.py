@@ -102,4 +102,19 @@ class Database:
             print(f"Error at loading prefixes: {error}")
             return None
 
+    async def delete_all_variables(self, server_id: int):
+        try:
+            # gets the database connection from pool
+            async with self.pool.acquire() as conn:
+                await conn.execute(
+                    """
+                    -- deletes all the variables with the given server id
+                    DELETE FROM DATA
+                    WHERE ID = $1
+                    """,
+                    server_id,
+                )
+        except Exception as error:
+            print(f"Error at deleting variables: {error}")
+    
 db = Database()

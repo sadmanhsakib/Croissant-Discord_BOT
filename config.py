@@ -82,27 +82,16 @@ async def remove_data(server_id: int):
     global notify_channel_id_cache, storage_dict_cache, nsfw_storage_dict_cache
     global auto_delete_cache
     
-    # removing the data from the database and resetting the variables
+    # removing the server's data from the local variables and dictionaries
     prefix_cache.pop(server_id)
-    await db.set_variable(server_id, "PREFIX", None)
-    
     search_limit_cache.pop(server_id)
-    await db.set_variable(server_id, "SEARCH_LIMIT", None)
-    
     nsfw_allowed_cache.pop(server_id)
-    await db.set_variable(server_id, "NSFW_ALLOWED", None)
-    
     delete_after_cache.pop(server_id)
-    await db.set_variable(server_id, "DELETE_AFTER", None)
-    
-    notify_channel_id_cache.pop(server_id)
-    await db.set_variable(server_id, "ACTIVITY_CHANNEL_ID", None)
-    await db.set_variable(server_id, "STORAGE", None)
-    
+    notify_channel_id_cache.pop(server_id)  
     nsfw_storage_dict_cache.pop(server_id)
-    await db.set_variable(server_id, "NSFW_STORAGE", None)
-    
     auto_delete_cache.pop(server_id)
-    await db.set_variable(server_id, "AUTO_DELETE", None)
+    
+    # removing the data from the database
+    await db.delete_all_variables(server_id)
 
     print("✅Successfully removed the data from the database!")
