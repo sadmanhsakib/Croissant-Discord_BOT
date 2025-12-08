@@ -67,7 +67,7 @@ async def set_default(server_id: int):
     await db.set_variable(server_id, "PREFIX", "-")
     await db.set_variable(server_id, "SEARCH_LIMIT", "50")
     await db.set_variable(server_id, "NSFW_ALLOWED", "false")
-    await db.set_variable(server_id, "DELETE_AFTER", "10")
+    await db.set_variable(server_id, "DELETE_AFTER", "0")
     await db.set_variable(server_id, "ACTIVITY_CHANNEL_ID", "0")
     await db.set_variable(server_id, "STORAGE", "{}")
     await db.set_variable(server_id, "NSFW_STORAGE", "{}")

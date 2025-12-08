@@ -236,7 +236,7 @@ class BotCommands(commands.Cog):
                     # updating the database
                     await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
 
-                    await ctx.send(f"{channel.name} scheduled for automatic deletion at {time} every day. ")
+                    await ctx.send(f"#{channel.name} scheduled for automatic deletion at {time} every day. ")
                 else:
                     await ctx.send(f"{channel_id} is not a valid channel. ")
 
