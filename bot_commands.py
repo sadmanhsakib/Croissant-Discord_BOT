@@ -1,6 +1,6 @@
 import os, json, random, datetime
 import discord
-import pain_au_chocolat, config
+import reddit, config
 from discord.ext import commands, tasks
 from database import db
 
@@ -159,7 +159,7 @@ class BotCommands(commands.Cog):
                 raise Exception
 
             # creating a object for using the reddit api
-            fetcher = pain_au_chocolat.Fetch()
+            fetcher = reddit.Fetch()
 
             # extracting the data from the message
             parts = message.split(' ')

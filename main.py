@@ -1,5 +1,5 @@
 import discord
-import config, pain_au_chocolat
+import config, reddit
 from discord.ext import commands
 from database import db
 
@@ -36,7 +36,7 @@ async def on_ready():
     await config.load_all_data()
 
     # authenticating the reddit api
-    await pain_au_chocolat.authenticate()
+    await reddit.authenticate()
 
     # loading the command script
     await bot.load_extension("bot_commands")
