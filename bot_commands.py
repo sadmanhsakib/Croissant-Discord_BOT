@@ -14,7 +14,7 @@ class BotCommands(commands.Cog):
             if message == '': 
                 raise Exception
 
-            await ctx.send(f"You said: {message}")
+            await ctx.send(message)
         except:
             await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}echo MESSAGE`")
 
