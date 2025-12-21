@@ -380,11 +380,19 @@ class BotCommands(commands.Cog):
             await ctx.send(f"Invalid. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}" +
                            "random-line quran/sunnah/quote`")
 
+    @commands.command(name="reload_var")
+    async def reload_server_data(self, ctx):
+        try:
+            await config.load_all_data()
+            await ctx.send("✅All Data Reloaded")
+        except:
+            await ctx.send("❌Failed to reload data.")
+
     async def send_item(self, item_names, message_channel):
         # looking for the correct link for each type
         for item_name in item_names:
             item_name = item_name.lower()
-            
+
             if item_name in config.storage_dict_cache[message_channel.guild.id].keys():
                 await message_channel.send(config.storage_dict_cache[message_channel.guild.id][item_name], 
                                            delete_after = config.delete_after_cache[message_channel.guild.id] 
