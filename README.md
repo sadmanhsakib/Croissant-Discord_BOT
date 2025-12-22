@@ -30,7 +30,7 @@ If you want to add **Croissant** in your Discord server, feel free to add this b
 
 Croissant is an “everyday” Discord bot that provides:
 
-- Utility commands ([ping](cci:1://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/bot_commands.py:24:4-26:70), [status](cci:1://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/bot_commands.py:28:4-30:56), [echo](cci:1://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/bot_commands.py:10:4-18:113), [hello](cci:1://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/bot_commands.py:20:4-22:96))
+- Utility commands (ping, status, echo, hello)
 - Moderation helpers (bulk message deletion)
 - Media storage and quick posting via `;ITEM_NAME`
 - Reddit image/GIF fetching (with NSFW gating)
@@ -140,22 +140,22 @@ Croissant uses a **prefix command system** (default: `-`). Commands below assume
 
 ## How It Works (Architecture)
 
-- **[main.py](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/main.py:0:0-0:0)**
+- **[main.py](main.py)**
   - Creates the Discord bot, loads configuration from the database, authenticates Reddit, and loads the command cog.
   - Handles:
     - Guild join/leave events
     - Message events (`;ITEM_NAME` parsing)
     - Presence updates (welcome back / bye)
-- **[bot_commands.py](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/bot_commands.py:0:0-0:0)**
+- **[bot_commands.py](bot_commands.py)**
   - The main command cog (commands listed above).
   - Runs a background scheduler loop (every 60s) for daily channel purging.
-- **[config.py](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/config.py:0:0-0:0)**
-  - Loads [.env](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/.env:0:0-0:0) variables and maintains per-guild caches loaded from PostgreSQL.
-- **[database.py](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/database.py:0:0-0:0)**
+- **[config.py](config.py)**
+  - Loads [.env](.env) variables and maintains per-guild caches loaded from PostgreSQL.
+- **[database.py](database.py)**
   - Async PostgreSQL layer using `asyncpg`, storing per-server variables in a single table.
-- **[reddit.py](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/reddit.py:0:0-0:0)**
+- **[reddit.py](reddit.py)**
   - Reddit authentication + image/GIF fetching via `asyncpraw`.
-- **[keep_alive.py](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/keep_alive.py:0:0-0:0)**
+- **[keep_alive.py](keep_alive.py)**
   - A minimal Flask server to keep the process alive on certain hosting platforms.
 
 ---
@@ -167,7 +167,7 @@ Croissant uses a **prefix command system** (default: `-`). Commands below assume
 - PostgreSQL database (connection URL required)
 - Reddit API credentials (optional but required for `-reddit`)
 
-> Note: [requirements.txt](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/requirements.txt:0:0-0:0) appears to contain non-text/NULL bytes in this repo snapshot, so you may need to regenerate it. The code imports indicate you’ll need at least:
+> Note: [requirements.txt](requirements.txt) appears to contain non-text/NULL bytes in this repo snapshot, so you may need to regenerate it. The code imports indicate you’ll need at least:
 > - `discord.py`
 > - `python-dotenv`
 > - `asyncpg`
@@ -179,7 +179,7 @@ Croissant uses a **prefix command system** (default: `-`). Commands below assume
 
 ## Configuration
 
-Create a [.env](cci:7://file:///c:/Users/831sa/OneDrive/Documents/Programming/scripts/Croissant-Discord_BOT/.env:0:0-0:0) file in the project root with:
+Create a [.env](.env) file in the project root with:
 
 ```env
 BOT_TOKEN=your_discord_bot_token
