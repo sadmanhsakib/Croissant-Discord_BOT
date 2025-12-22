@@ -183,7 +183,7 @@ Create a [.env](.env) file in the project root with:
 
 ```env
 BOT_TOKEN=your_discord_bot_token
-REPO_URL=[https://github.com/<your-org-or-user>/<your-repo](https://github.com/<your-org-or-user>/<your-repo)>
+REPO_URL=https://github.com/sadmanhsakib/Croissant-Discord_BOT
 DATABASE_URL=postgresql://user:password@host:port/dbname
 
 # Reddit (required only for -reddit)
