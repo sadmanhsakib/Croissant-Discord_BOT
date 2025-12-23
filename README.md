@@ -3,23 +3,15 @@
 A feature-rich Discord bot written in Python that helps moderate channels, automate routine tasks, provide utility commands, and fetch media content from Reddit. Croissant is designed to be **server-aware** (per-guild configuration), with settings persisted in a PostgreSQL database.
 
 ---
-If you want to add **Croissant** in your Discord server, feel free to add this bot to your server click [here](https://discord.com/oauth2/authorize?client_id=1175661660656652096&permissions=8&redirect_uri=https%3A%2F%2Fdiscord.com%2Foauth2%2Fauthorize&response_type=code&scope=bot).
-
----
 ## Table of Contents
 
 - [Overview](#overview)
+- [Invite Croissant](#invite-croissant)
 - [Key Features](#key-features)
 - [Commands](#commands)
 - [How It Works (Architecture)](#how-it-works-architecture)
 - [Requirements](#requirements)
 - [Configuration](#configuration)
-- [Installation & Local Development](#installation--local-development)
-- [Running the Bot](#running-the-bot)
-- [Discord Permissions & Intents](#discord-permissions--intents)
-- [Database Schema](#database-schema)
-- [Deployment Notes](#deployment-notes)
-- [Troubleshooting](#troubleshooting)
 - [Security & Privacy](#security--privacy)
 - [Contributing](#contributing)
 - [License](#license)
@@ -41,6 +33,10 @@ Croissant is an “everyday” Discord bot that provides:
 Default command prefix is `-` (per-server customizable).
 
 ---
+## Invite Croissant
+If you want to add **Croissant** in your Discord server, feel free to add this bot to your server by clicking [here](https://discord.com/oauth2/authorize?client_id=1419550251739516959&permissions=1374389746800&integration_type=0&scope=bot).
+
+---
 
 ## Key Features
 
@@ -51,7 +47,7 @@ Default command prefix is `-` (per-server customizable).
 - **Reddit integration**
   - Fetch a random image/GIF from a subreddit with controls for NSFW content.
 - **Scheduled channel purging**
-  - Daily automated cleanup for configured channels.
+  - Optional daily automated cleanup for configured channels.
 - **Presence notifications**
   - Optional “welcome back / bye” messages when members go online/offline.
 
@@ -150,13 +146,11 @@ Croissant uses a **prefix command system** (default: `-`). Commands below assume
   - The main command cog (commands listed above).
   - Runs a background scheduler loop (every 60s) for daily channel purging.
 - **[config.py](config.py)**
-  - Loads [.env](.env) variables and maintains per-guild caches loaded from PostgreSQL.
+  - Loads [.env](example.env) variables and maintains per-guild caches loaded from PostgreSQL.
 - **[database.py](database.py)**
   - Async PostgreSQL layer using `asyncpg`, storing per-server variables in a single table.
 - **[reddit.py](reddit.py)**
   - Reddit authentication + image/GIF fetching via `asyncpraw`.
-- **[keep_alive.py](keep_alive.py)**
-  - A minimal Flask server to keep the process alive on certain hosting platforms.
 
 ---
 
@@ -166,20 +160,13 @@ Croissant uses a **prefix command system** (default: `-`). Commands below assume
 - A Discord application + bot token
 - PostgreSQL database (connection URL required)
 - Reddit API credentials (optional but required for `-reddit`)
-
-> Note: [requirements.txt](requirements.txt) appears to contain non-text/NULL bytes in this repo snapshot, so you may need to regenerate it. The code imports indicate you’ll need at least:
-> - `discord.py`
-> - `python-dotenv`
-> - `asyncpg`
-> - `asyncpraw`
-> - `asyncprawcore`
-> - `Flask`
+- Check [requirements](requirements.txt) for additional libraries that are required for local hosting
 
 ---
 
 ## Configuration
 
-Create a [.env](.env) file in the project root with:
+Create a [.env](example.env) file in the project root with:
 
 ```env
 BOT_TOKEN=your_discord_bot_token
@@ -191,3 +178,38 @@ REDDIT_USERNAME=your_reddit_username
 REDDIT_PASSWORD=your_reddit_password
 CLIENT_ID=your_reddit_client_id
 SECRET=your_reddit_client_secret
+```
+
+---
+
+## Security & Privacy
+
+Croissant is built with security and privacy in mind, ensuring that server data and user interactions are handled responsibly.
+
+### Core Security Features
+- **Environment Variables**: Sensitive credentials such as the Discord Bot Token, Database URL, and Reddit API keys are stored securely in a `.env` file and are never hardcoded into the source code. This prevents accidental exposure in version control.
+- **Database Isolation**: All configuration data is stored in a secure PostgreSQL database (`asyncpg`). The bot uses parameterized queries to prevent SQL injection attacks.
+- **Permission Management**:
+  - The bot uses Discord's **Intents** system to request only necessary data (Message Content, Presences, Members).
+  - Moderation commands (like `-del`) and configuration commands (like `-set`) are restricted to users with appropriate permissions or are designed to be used by server administrators.
+- **Data Minimization**:
+  - The bot **does not** permanently store user messages. It only processes messages in real-time for commands and specific triggers (like `;item`).
+  - Stored data is strictly limited to server configuration (prefixes, limits) and user-defined shortcuts (media links).
+- **NSFW Protection**:
+  - NSFW content from Reddit or stored items is strictly gated. It requires the server to explicitly enable `NSFW_ALLOWED` and can only be accessed in channels marked as NSFW within Discord.
+
+---
+
+## Contributing
+
+This project is the work of a sole contributor.
+
+- **Lead Developer & Maintainer**: [Sadman Sakib](https://github.com/sadmanhsakib)
+
+If you have suggestions, bug reports, or feature requests, please open an issue on the GitHub repository. While external contributions are welcome via Pull Requests, please note that the core vision and maintenance are handled by the author.
+
+---
+
+## License
+
+This project is licensed under the PolyForm Noncommercial License 1.0.0 - see the [LICENSE](LICENSE) file for details.
