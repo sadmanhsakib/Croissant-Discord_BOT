@@ -1,7 +1,10 @@
 import discord
 import config, reddit
 from discord.ext import commands
+from groq import Groq
 from database import db
+from test import user_prompt
+
 
 # giving the permissions
 intents = discord.Intents.default()
@@ -19,6 +22,7 @@ async def get_prefix(bot, message):
 
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 cog = None
+groq_client = Groq(api_key=config.GROQ_API)
 
 @bot.event
 # when the bot starts
@@ -31,7 +35,7 @@ async def on_ready():
     await config.load_all_data()
 
     # authenticating the reddit api
-    await reddit.authenticate()
+    #await reddit.authenticate()
 
     # loading the command script
     await bot.load_extension("bot_commands")
@@ -86,15 +90,41 @@ async def on_message(message):
     # prevents the bot from replying on its own messages
     if message.author == bot.user:
         return
-    
     # reacting to hate messages
     if message.content.lower().__contains__("clanker"):
         await message.add_reaction("💢")
+    # checking for mentions
+    elif bot.user in message.mentions:
+        parts = message.content.split(' ')[1:]
+        user_prompt = ' '.join(parts)
+        
+        if not user_prompt:
+            return
+        
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": config.system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                },
+            ],
+            model=config.model,
+            max_tokens=config.max_tokens,
+            temperature=config.temperature,
+        )
+
+        response = chat_completion.choices[0].message.content.strip()
+        await message.channel.send(response)
+
     # replying to item requests
     if message.content.__contains__(';'):
         item_names = []
         parts = message.content.split(' ')
-            
+
         # for every word in the message
         for part in parts: 
             if part[0] == ';':
@@ -107,7 +137,7 @@ async def on_message(message):
                         item_names.append(part[1:])
                 except IndexError:  
                     return
-        
+
         if item_names:
             # sending items if applicable
             await cog.send_item(item_names, message.channel)

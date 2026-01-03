@@ -32,17 +32,32 @@ class Database:
         try:
             # gets the database connection from pool
             async with self.pool.acquire() as conn:
+                # creating a SQl table for master variables
+                await conn.execute(
+                    """
+                    -- creating a table if not exists
+                    CREATE TABLE IF NOT EXISTS MASTER_DATA (
+                        NAME VARCHAR(100),
+                        VALUE TEXT,
+                        created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Dhaka'),
+                        updated_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Dhaka'),
+                        -- ensures that the variable names are unique
+                        PRIMARY KEY (NAME)
+                    );           
+                """
+                )
+
                 # creating a SQL table for dynamic variables
                 await conn.execute(
                     """
-                    -- creating a table called 'DATA' if not exists
-                    CREATE TABLE IF NOT EXISTS DATA (
+                    -- creating a table if not exists
+                    CREATE TABLE IF NOT EXISTS SERVER_DATA (
                         ID BIGINT,
                         NAME VARCHAR(100),
                         VALUE TEXT,
                         created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Dhaka'),
                         updated_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Dhaka'),
-                        -- ensures that each combination of server id and variable name is unique
+                        -- ensures that the combination of server id and variable name is unique
                         PRIMARY KEY (ID, NAME)
                     );
                 """
@@ -61,7 +76,7 @@ class Database:
                 await conn.execute(
                     """
                     -- inserts a new variable in the table
-                    INSERT INTO DATA (ID, NAME, VALUE)
+                    INSERT INTO SERVER_DATA (ID, NAME, VALUE)
                     -- $1, $2 and $3 are asyncpg placeholders
                     VALUES ($1, $2, $3)
                     -- conflict occurs when the variable name already exists
@@ -78,6 +93,22 @@ class Database:
         except Exception as error:
             print(f"❌ Error setting variables: {error}")
 
+    async def get_variable(self, variable_name: str):
+        try:
+            # gets the database connection from pool
+            async with self.pool.acquire() as conn:
+                # inserting/updating the variable
+                value = await conn.fetchrow(
+                    """
+                    SELECT VALUE FROM MASTER_DATA
+                    WHERE NAME = $1
+                    """,
+                    variable_name,
+                )
+                return value["value"]
+        except Exception as error:
+            print(f"❌ Error fetching variables: {error}")
+
     async def load_all_variables(self, variable_name: str):
         try:
             dictionary = {}
@@ -88,7 +119,7 @@ class Database:
                     """
                     -- gets all the prefixes
                     SELECT ID, VALUE
-                    FROM DATA
+                    FROM SERVER_DATA
                     WHERE NAME = $1
                     """,
                     variable_name,
@@ -109,12 +140,12 @@ class Database:
                 await conn.execute(
                     """
                     -- deletes all the variables with the given server id
-                    DELETE FROM DATA
+                    DELETE FROM SERVER_DATA
                     WHERE ID = $1
                     """,
                     server_id,
                 )
         except Exception as error:
             print(f"Error at deleting variables: {error}")
-    
+
 db = Database()

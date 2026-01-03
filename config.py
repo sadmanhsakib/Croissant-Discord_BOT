@@ -3,14 +3,23 @@ import dotenv
 
 dotenv.load_dotenv()
 
+# variables from the .env file
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 REPO_URL = os.getenv("REPO_URL")
 DATABASE_URL = os.getenv("DATABASE_URL")
+GROQ_API = os.getenv("GROQ_API")
 USERNAME = os.getenv("REDDIT_USERNAME")
 PASSWORD = os.getenv("REDDIT_PASSWORD")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("SECRET")
 
+# master variables from database
+system_prompt=None
+model=None
+max_tokens=None
+temperature=None
+
+# server specific variables from database
 prefix_cache = None
 search_limit_cache = None
 nsfw_allowed_cache = None
@@ -24,6 +33,15 @@ auto_delete_cache = None
 async def load_all_data():
     from database import db
 
+    # master variables
+    global system_prompt, model, max_tokens, temperature
+
+    system_prompt = await db.get_variable("SYSTEM_PROMPT")
+    model = await db.get_variable("MODEL")
+    max_tokens = int(await db.get_variable("MAX_TOKENS"))
+    temperature = float(await db.get_variable("TEMPERATURE"))
+
+    # server specific variables
     global prefix_cache, search_limit_cache, nsfw_allowed_cache, delete_after_cache
     global notify_channel_id_cache, storage_dict_cache, nsfw_storage_dict_cache
     global auto_delete_cache
