@@ -35,7 +35,7 @@ async def on_ready():
     await config.load_all_data()
 
     # authenticating the reddit api
-    #await reddit.authenticate()
+    await reddit.authenticate()
 
     # loading the command script
     await bot.load_extension("bot_commands")
