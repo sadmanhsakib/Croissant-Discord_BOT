@@ -3,3 +3,7 @@ __pycache__/
 .vscode/
 .venv/
 .git/
+README.md
+LICENSE
+example.env
+.gitignore
