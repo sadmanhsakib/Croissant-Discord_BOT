@@ -47,8 +47,9 @@ class BotCommands(commands.Cog):
             f"`{config.prefix_cache[ctx.guild.id]}ping` - Returns the latency of the BOT in milliseconds.\n"
             f"`{config.prefix_cache[ctx.guild.id]}list` - Returns all the available item names from the storage.\n"
             f"`{config.prefix_cache[ctx.guild.id]}list nsfw` - Returns all the available NSFW item names from the storage.\n"
-            f"`{config.prefix_cache[ctx.guild.id]}list autodelete` - Returns all the scheduled channel names for automatic deletion.\n",
-            inline=False,
+            f"`{config.prefix_cache[ctx.guild.id]}list autodelete` - Returns all the scheduled channel names for automatic deletion.\n"
+            f"`@Croissant [ask anything]` - Uses the AI to answer your question.\n",
+            inline=False
         )
 
         # adding the complex commands
@@ -380,7 +381,7 @@ class BotCommands(commands.Cog):
             await ctx.send(f"Invalid. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}" +
                            "random-line quran/sunnah/quote`")
 
-    @commands.command(name="reload_var")
+    @commands.command(name="reload")
     async def reload_server_data(self, ctx):
         try:
             await config.load_all_data()

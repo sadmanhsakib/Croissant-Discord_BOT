@@ -3,8 +3,6 @@ import config, reddit
 from discord.ext import commands
 from groq import Groq
 from database import db
-from test import user_prompt
-
 
 # giving the permissions
 intents = discord.Intents.default()
