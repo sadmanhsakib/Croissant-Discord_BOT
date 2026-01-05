@@ -65,17 +65,10 @@ async def on_guild_join(guild):
 
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
-        await channel.send("Thank you for adding Croissant!")
-        await channel.send(f"Type: `{config.prefix_cache[guild.id]}help` to get the command list.")
-        await channel.send("It's recommended for to try all the commands at least for once. ")
-        await channel.send(f"You can learn more about the BOT from here: {config.REPO_URL}")
-
-        # instructing the users on how to set up the channel
-        await channel.send("By default, this bot sends greeting to members when they come online and goes offline. ")
-        await channel.send(
-            f"If you want to use this feature, use the '{config.prefix_cache[guild.id]}set<space>ACTIVITY_CHANNEL_ID<space>channel_id' command. "
-        )
-        await channel.send("If you don't want to use this feature, you can ignore it. ")
+        await channel.send("Thank you for adding Croissant! ")
+        await channel.send("Croissant has a lot of commands, functionality and practical use cases.")
+        await channel.send(f"That's why it's high recommended to read the concise README file.\n"
+                           + "You can read it by clicking in here: {config.README_URL}")
 
 @bot.event
 async def on_guild_remove(guild):

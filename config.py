@@ -5,7 +5,7 @@ dotenv.load_dotenv()
 
 # variables from the .env file
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-REPO_URL = os.getenv("REPO_URL")
+README_URL = os.getenv("README_URL")
 DATABASE_URL = os.getenv("DATABASE_URL")
 GROQ_API = os.getenv("GROQ_API")
 USERNAME = os.getenv("REDDIT_USERNAME")

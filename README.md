@@ -170,7 +170,7 @@ Create a [.env](example.env) file in the project root with:
 
 ```env
 BOT_TOKEN=your_discord_bot_token
-REPO_URL=https://github.com/sadmanhsakib/Croissant-Discord_BOT
+README_URL=https://github.com/sadmanhsakib/Croissant-Discord_BOT/blob/main/README.md
 DATABASE_URL=postgresql://user:password@host:port/dbname
 
 # Groq API (required for AI responses)
