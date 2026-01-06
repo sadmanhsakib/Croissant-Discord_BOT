@@ -22,6 +22,7 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None
 cog = None
 groq_client = Groq(api_key=config.GROQ_API)
 
+
 @bot.event
 # when the bot starts
 async def on_ready():
@@ -40,6 +41,7 @@ async def on_ready():
 
     # importing and creating a cog object
     from bot_commands import BotCommands
+
     cog = BotCommands(bot)
 
     # this won't actually start until before_scheduler completes
@@ -66,14 +68,20 @@ async def on_guild_join(guild):
     if channel and channel.permissions_for(guild.me).send_messages:
         # sending greeting messages
         await channel.send("Thank you for adding Croissant! ")
-        await channel.send("Croissant has a lot of commands, functionality and practical use cases.")
-        await channel.send(f"That's why it's high recommended to read the concise README file.\n"
-                           + "You can read it by clicking in here: {config.README_URL}")
+        await channel.send(
+            "Croissant has a lot of commands, functionality and practical use cases."
+        )
+        await channel.send(
+            f"That's why it's high recommended to read the concise README file.\n"
+            + "You can read it by clicking in here: {config.README_URL}"
+        )
+
 
 @bot.event
 async def on_guild_remove(guild):
     # removes all the data from the database and resets the variables
     await config.remove_data(guild.id)
+
 
 @bot.event
 # when the user sends a message in server
@@ -86,23 +94,49 @@ async def on_message(message):
         await message.add_reaction("💢")
     # checking for mentions
     elif bot.user in message.mentions:
-        parts = message.content.split(' ')[1:]
-        user_prompt = ' '.join(parts)
-        
+        # parsing the user input
+        user_prompt = message.content.replace(bot.user.mention, "").strip()
+
         if not user_prompt:
             return
-        
-        chat_completion = groq_client.chat.completions.create(
-            messages=[
+
+        # system prompt for the bot
+        messages = [
+            {
+                "role": "system",
+                "content": config.system_prompt,
+            },
+        ]
+
+        # checking if the message is a reply
+        if message.type == discord.MessageType.reply:
+            # getting the message that the user replied to
+            replied_message = await message.channel.fetch_message(
+                message.reference.message_id
+            )
+            messages.append(
                 {
-                    "role": "system",
-                    "content": config.system_prompt,
-                },
+                    "role": "assistant",
+                    "content": replied_message.content,
+                }
+            )
+            messages.append(
                 {
                     "role": "user",
                     "content": user_prompt,
-                },
-            ],
+                }
+            )
+        else:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": user_prompt,
+                }
+            )
+
+        # getting the response from the bot
+        chat_completion = groq_client.chat.completions.create(
+            messages=messages,
             model=config.model,
             max_tokens=config.max_tokens,
             temperature=config.temperature,
@@ -112,21 +146,21 @@ async def on_message(message):
         await message.channel.send(response)
 
     # replying to item requests
-    if message.content.__contains__(';'):
+    if message.content.__contains__(";"):
         item_names = []
-        parts = message.content.split(' ')
+        parts = message.content.split(" ")
 
         # for every word in the message
-        for part in parts: 
-            if part[0] == ';':
+        for part in parts:
+            if part[0] == ";":
                 try:
                     # checking if the item name is an actual request
-                    if part[1] == ' ':
+                    if part[1] == " ":
                         return
                     else:
                         # removing the ; from the item name
                         item_names.append(part[1:])
-                except IndexError:  
+                except IndexError:
                     return
 
         if item_names:
@@ -155,7 +189,7 @@ async def on_presence_update(before, after):
             # sends a greeting message
             await channel.send(f"Welcome back, {after.name}.")
         # if the user goes offline
-        elif old_status != "offline" and new_status == "offline":     
+        elif old_status != "offline" and new_status == "offline":
             await channel.send(f"Bye, {after.name}")
 
 
