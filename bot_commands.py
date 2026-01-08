@@ -13,10 +13,15 @@ class BotCommands(commands.Cog):
         try:
             if message == '': 
                 raise Exception
-
-            await ctx.send(message)
+            elif message.__contains__("--"):
+                # finding the number of time to repeat
+                index = message.find('--')
+                n = int(message[index+2:].strip())
+                await ctx.send(f"{message[:index].strip()}\n" * n)
+            else:
+                await ctx.send(message)
         except:
-            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}echo MESSAGE`")
+            await ctx.send(f"Invalid command. Correct Syntax: `{config.prefix_cache[ctx.guild.id]}echo MESSAGE --number(optional)`")
 
     @commands.command(name="hello")
     async def hello(self, ctx):
@@ -41,7 +46,7 @@ class BotCommands(commands.Cog):
         # adding the general commands
         embed.add_field(
             name="\n📝 General Commands: ",
-            value=f"`{config.prefix_cache[ctx.guild.id]}echo` - Echoes what you say.\n"
+            value=f"`{config.prefix_cache[ctx.guild.id]}echo --number of times you want it to repeat(OPTIONAL)` - Repeats the message back to the channel.\n"
             f"`{config.prefix_cache[ctx.guild.id]}hello` - Greets the user.\n"
             f"`{config.prefix_cache[ctx.guild.id]}status` - Returns the status of the bot.\n"
             f"`{config.prefix_cache[ctx.guild.id]}ping` - Returns the latency of the BOT in milliseconds.\n"

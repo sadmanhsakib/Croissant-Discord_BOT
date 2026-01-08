@@ -65,7 +65,7 @@ Croissant uses a **prefix command system** (default: `-`). Commands below assume
 
 - `-help`
   - Shows an embedded help menu.
-- `-echo MESSAGE`
+- `-echo MESSAGE --number(OPTIONAL)`
   - Repeats the message back to the channel.
 - `-hello`
   - Greets the user.
