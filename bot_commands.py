@@ -234,7 +234,16 @@ class BotCommands(commands.Cog):
 
                 channel = self.bot.get_channel(int(channel_id))
 
-                if channel:
+                # checking for validity
+                if channel and channel in ctx.guild.channels:
+                    try:
+                        # checking for correct time format
+                        datetime.datetime.strptime(time, "%H:%M:%S")
+                    except:
+                        await ctx.send(f"Invalid Time. Correct format: `HOUR:MINUTE:SECOND`" +
+                                      f"\nFor example: `{config.prefix_cache[ctx.guild.id]}add autodelete 111111111111111111 12:00:00`")
+                        return
+
                     # adding the channel_id and time in the dictionary
                     config.auto_delete_cache[ctx.guild.id].update({channel_id: time})
                     # dumping the whole dict in a string for saving
@@ -242,10 +251,9 @@ class BotCommands(commands.Cog):
                     # updating the database
                     await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
 
-                    await ctx.send(f"#{channel.name} scheduled for automatic deletion at {time} every day. ")
+                    await ctx.send(f"**{channel.name}** scheduled for automatic deletion at **{time}** every day. ")
                 else:
-                    await ctx.send(f"{channel_id} is not a valid channel. ")
-
+                    await ctx.send(f"{channel_id} is not a valid channel in this server. ")
             else:
                 raise Exception
         except Exception:
@@ -289,18 +297,22 @@ class BotCommands(commands.Cog):
             elif len(parts) == 2:
                 if parts[0].lower() == "autodelete":
                     channel_id = parts[1]
+                    channel = self.bot.get_channel(int(channel_id))
 
-                    # checking if the item is in the dictionary
-                    if channel_id in config.auto_delete_cache[ctx.guild.id].keys():
-                        config.auto_delete_cache[ctx.guild.id].pop(channel_id)
-                        # dumping the whole dict in a string for saving
-                        updated = json.dumps(config.auto_delete_cache[ctx.guild.id], ensure_ascii=False)
-                        # updating the database
-                        await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
+                    if channel:
+                        # checking if the item is in the dictionary
+                        if channel_id in config.auto_delete_cache[ctx.guild.id].keys():
+                            config.auto_delete_cache[ctx.guild.id].pop(channel_id)
+                            # dumping the whole dict in a string for saving
+                            updated = json.dumps(config.auto_delete_cache[ctx.guild.id], ensure_ascii=False)
+                            # updating the database
+                            await db.set_variable(ctx.guild.id, "AUTO_DELETE", updated)
 
-                        await ctx.send(f"Auto delete for channel {channel_id} removed successfully.")
+                            await ctx.send(f"Auto delete for channel **{channel.name}** removed successfully.")
+                        else:
+                            await ctx.send(f"There is no {channel_id} in storage scheduled for auto deletion. ")
                     else:
-                        await ctx.send(f"There is no {channel_id} in storage scheduled for auto deletion. ")
+                        await ctx.send("Invalid channel id. ")
                 else:
                     raise Exception
             else:
